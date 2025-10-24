@@ -53,7 +53,7 @@ export default function OneDrivePage() {
                       <li>🚀 <strong>Performance:</strong> Direct file system access</li>
                       <li>🛡️ <strong>Reliability:</strong> No link resolution overhead</li>
                       <li>🔧 <strong>Maintenance:</strong> Zero symbolic link management</li>
-                      <li>💼 <strong>Enterprise:</strong> Santander Office 365 support</li>
+                      <li>💼 <strong>Enterprise:</strong> TEST Office 365 support</li>
                       <li>📱 <strong>Accessibility:</strong> Files available on all devices</li>
                     </ul>
                   </div>
@@ -98,7 +98,7 @@ export default function OneDrivePage() {
                           <div className="card-body text-center">
                             <i className="bi bi-shield-check-fill display-6 text-warning"></i>
                             <h6 className="mt-2">Enterprise Security</h6>
-                            <small className="text-muted">Santander Office 365 compliance and security</small>
+                            <small className="text-muted">TEST Office 365 compliance and security</small>
                           </div>
                         </div>
                       </div>

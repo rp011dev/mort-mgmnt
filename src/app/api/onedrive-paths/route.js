@@ -8,8 +8,8 @@ function detectOneDrivePaths() {
   const homeDir = os.homedir()
   const possiblePaths = [
     {
-      name: 'OneDrive - Santander Office 365',
-      path: path.join(homeDir, 'OneDrive - Santander Office 365'),
+      name: 'OneDrive - TEST Office 365',
+      path: path.join(homeDir, 'OneDrive - TEST Office 365'),
       type: 'business'
     },
     {
@@ -24,7 +24,7 @@ function detectOneDrivePaths() {
     },
     {
       name: 'OneDrive (Cloud Storage)',
-      path: path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-SantanderOffice365'),
+      path: path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-TESTOffice365'),
       type: 'business'
     },
     {

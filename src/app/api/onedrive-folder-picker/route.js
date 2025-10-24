@@ -9,10 +9,10 @@ export async function GET() {
     
     // Common OneDrive locations
     const oneDrivePaths = [
-      path.join(homeDir, 'OneDrive - Santander Office 365'),
+      path.join(homeDir, 'OneDrive - TEST Office 365'),
       path.join(homeDir, 'OneDrive'),
       path.join(homeDir, 'OneDrive - Personal'),
-      path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-SantanderOffice365'),
+      path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-TESTOffice365'),
       path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-Personal')
     ]
     

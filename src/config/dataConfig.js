@@ -46,10 +46,10 @@ export const getOneDrivePath = () => {
   
   // Priority order for OneDrive paths (fallback when no config exists)
   const oneDrivePaths = [
-    path.join(homeDir, 'OneDrive - Santander Office 365', 'GK-Finance-Data', 'data'),
+    path.join(homeDir, 'OneDrive - TEST Office 365', 'GK-Finance-Data', 'data'),
     path.join(homeDir, 'OneDrive', 'GK-Finance-Data', 'data'),
     path.join(homeDir, 'OneDrive - Personal', 'GK-Finance-Data', 'data'),
-    path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-SantanderOffice365', 'GK-Finance-Data', 'data'),
+    path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-TESTOffice365', 'GK-Finance-Data', 'data'),
     path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-Personal', 'GK-Finance-Data', 'data')
   ]
   
@@ -68,10 +68,10 @@ export const getOneDrivePath = () => {
   
   // If no OneDrive path found, create one in the first available OneDrive location
   const oneDriveRoots = [
-    path.join(homeDir, 'OneDrive - Santander Office 365'),
+    path.join(homeDir, 'OneDrive - TEST Office 365'),
     path.join(homeDir, 'OneDrive'),
     path.join(homeDir, 'OneDrive - Personal'),
-    path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-SantanderOffice365'),
+    path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-TESTOffice365'),
     path.join(homeDir, 'Library', 'CloudStorage', 'OneDrive-Personal')
   ]
   

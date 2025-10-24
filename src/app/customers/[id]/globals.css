@@ -1,0 +1,593 @@
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+}
+
+/* Bootstrap Icons fallback - if icons don't show, they'll display as text */
+.bi::before {
+  font-family: "bootstrap-icons" !important;
+}
+
+.bi-search::before { content: "🔍"; }
+.bi-people::before { content: "👥"; }
+.bi-graph-up::before { content: "📈"; }
+.bi-funnel::before { content: "🔽"; }
+
+body {
+  background-color: #f8f9fa;
+}
+
+.stage-badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.stage-initial-enquiry-assessment {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.stage-document-verification {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.stage-decision-in-principle {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.stage-application-submitted-lender {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.stage-case-submitted-network {
+  background-color: #fff8e1;
+  color: #f57c00;
+}
+
+.stage-offer-generated {
+  background-color: #e8f5e8;
+  color: #1b5e20;
+}
+
+.stage-solicitor-initial-quote-issued {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+.stage-solicitor-quote-accepted-fee-paid {
+  background-color: #f1f8e9;
+  color: #689f38;
+}
+
+.stage-solicitor-initial-search-legal-enquiries {
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+.stage-solicitor-contracts-prepared {
+  background-color: #e8eaf6;
+  color: #3f51b5;
+}
+
+.stage-exchange-completion {
+  background-color: #e8f5e8;
+  color: #1b5e20;
+}
+
+.customer-card {
+  transition: transform 0.2s ease-in-out;
+  border: 1px solid #dee2e6;
+}
+
+.customer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.search-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.progress-timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.progress-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -23px;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.timeline-item.completed::before {
+  background: var(--success-color);
+  box-shadow: 0 0 0 2px var(--success-color);
+}
+
+.document-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.document-verified {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.document-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+  color: white;
+  padding: 4rem 0;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Success message animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.alert-success {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.alert-success.fade-out {
+  animation: fadeOut 0.3s ease-in;
+}
+
+/* Icon styling for success message */
+.bi-check-circle-fill::before { 
+  content: "✅"; 
+}
+
+/* Pagination styling */
+.pagination {
+  margin-bottom: 0;
+}
+
+.pagination .page-link {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  margin: 0 2px;
+  border-radius: 0.375rem;
+  color: var(--primary-color);
+  transition: all 0.15s ease-in-out;
+}
+
+.pagination .page-link:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  color: var(--primary-color);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+/* Loading spinner styling */
+.spinner-border {
+  color: var(--primary-color);
+}
+
+/* Search button styling */
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Top pagination controls */
+.pagination-controls-top {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #dee2e6;
+}
+
+/* Enhanced filter card */
+.filter-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.filter-card .card-body {
+  padding: 2rem;
+}
+
+/* Document Table Styling - Using Fees Table Class */
+/* Document-specific enhancements when using fees-table class */
+.fees-table .document-file-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+}
+
+.document-file-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+}
+
+/* Document View Button Styling - Matching Fee Action Buttons */
+.document-view-btn {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.document-view-btn:hover {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.document-view-btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+
+/* Document Row Enhancements */
+.documents-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Document Status Column Styling */
+.documents-table .document-status-dropdown {
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Document Type Badge Styling */
+.document-type-badge {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Simple Document Status Dropdown Styling */
+.document-status-dropdown {
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  background: #fff;
+  border: 1px solid #ced4da;
+  font-size: 0.875rem;
+  color: #495057;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.document-status-dropdown:hover {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.15);
+}
+
+.document-status-dropdown:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  outline: none;
+}
+
+/* Status-specific dropdown colors for quick visual reference */
+.document-status-received {
+  border-left: 3px solid #17a2b8;
+}
+
+.document-status-verificationinpending {
+  border-left: 3px solid #ffc107;
+}
+
+.document-status-verified {
+  border-left: 3px solid #28a745;
+}
+
+.document-status-changing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Status Dropdown Icons */
+.status-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.status-dropdown-wrapper::after {
+  content: '\f282'; /* Bootstrap chevron-down */
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6c757d;
+  font-size: 0.7rem;
+}
+
+/* Status Change Animation */
+.document-status-changing {
+  position: relative;
+  overflow: hidden;
+}
+
+.document-status-changing::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(13, 110, 253, 0.1), transparent);
+  animation: shimmer 1s ease-in-out;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Status Success Animation */
+.status-success-flash {
+  animation: successFlash 0.6s ease-out;
+}
+
+@keyframes successFlash {
+  0% { background-color: rgba(25, 135, 84, 0.1); }
+  50% { background-color: rgba(25, 135, 84, 0.2); }
+  100% { background-color: transparent; }
+}
+
+/* Status Loading Indicator */
+.status-loading-indicator {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.status-loading-indicator .spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+/* Enhanced Success Animation */
+.status-change-success {
+  animation: statusSuccessPulse 1.5s ease-in-out;
+  border-color: #28a745 !important;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+}
+
+@keyframes statusSuccessPulse {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+  }
+  25% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+  }
+}
+
+/* Improved Disabled State */
+.document-status-dropdown:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #f8f9fa;
+}
+
+/* Document Status Badge Styling - Matching Fee Status Pattern */
+.document-status-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid;
+  transition: var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-right: 0.5rem;
+}
+
+.document-status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Document Status Dropdown - Matching Fee Status Pattern */
+.document-status-dropdown {
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  min-width: 120px;
+  width: auto;
+}
+
+.document-status-received {
+  background: #d1ecf1;
+  color: #0c5460;
+  border-color: #bee5eb;
+}
+
+.document-status-inreview {
+  background: #fff3cd;
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.document-status-verified {
+  background: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.document-status-changing {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Document Table Column Widths - Updated for 4 columns */
+.fees-table th:nth-child(1) { /* File Name */
+  width: 40%;
+  min-width: 250px;
+}
+
+.fees-table th:nth-child(2) { /* Status */
+  width: 20%;
+  min-width: 140px;
+}
+
+.fees-table th:nth-child(3) { /* Upload Date */
+  width: 20%;
+  min-width: 120px;
+}
+
+.fees-table th:nth-child(4) { /* Actions */
+  width: 20%;
+  min-width: 180px;
+}
+
+/* Ensure status cell has enough space */
+.fees-table td:nth-child(2) {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Make sure the status dropdown container has proper spacing */
+.fees-table td:nth-child(2) .d-flex {
+  min-width: 140px;
+}
+
+/* Responsive improvements for document status */
+@media (max-width: 768px) {
+  .document-status-dropdown {
+    min-width: 100px;
+    font-size: 0.8rem;
+  }
+  
+  .fees-table th:nth-child(2),
+  .fees-table td:nth-child(2) {
+    min-width: 120px;
+  }
+}
+
+/* Ensure dropdown options are fully visible */
+.document-status-dropdown option {
+  padding: 0.375rem 0.75rem;
+  background: white;
+  color: #212529;
+}
+
+/* Fix any text overflow issues */
+.document-status-dropdown {
+  text-overflow: ellipsis;
+  overflow: visible;
+}
+
+

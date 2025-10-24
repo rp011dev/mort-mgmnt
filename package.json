@@ -1,0 +1,39 @@
+{
+  "name": "gk-finance-mortgages-insurance",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "node server.js",
+    "start:prod": "NODE_ENV=production node server.js",
+    "build:exe": "node build-exe.js",
+    "lint": "next lint"
+  },
+  "pkg": {
+    "assets": [
+      ".next/**/*",
+      "public/**/*"
+    ],
+    "scripts": [
+      ".next/server/**/*.js"
+    ]
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^3.30.0",
+    "@next/env": "^15.5.2",
+    "bootstrap": "^5.3.3",
+    "express": "^5.1.0",
+    "mime-types": "^3.0.1",
+    "next": "^14.2.32",
+    "nodemailer": "^7.0.5",
+    "pkg": "^5.8.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5"
+  }
+}

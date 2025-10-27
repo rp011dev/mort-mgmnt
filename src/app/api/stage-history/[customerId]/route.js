@@ -42,7 +42,7 @@ async function readStageHistory() {
   try {
     const content = await fs.readFile(STAGE_HISTORY_FILE, 'utf-8')
     const data = JSON.parse(content)
-    console.log('Raw stage history data:', data)
+    //console.log('Raw stage history data:', data)
     
     // Ensure the data structure is correct
     if (typeof data !== 'object' || data === null) {
@@ -84,7 +84,7 @@ export async function GET(req, { params }) {
     
     // Get customer's history
     let customerHistory = stageHistory[customerId] || [];
-    console.log('Raw customer history:', customerHistory);
+    //console.log('Raw customer history:', customerHistory);
 
     // Ensure we have an array and sort by timestamp (newest first)
     if (Array.isArray(customerHistory)) {
@@ -95,7 +95,7 @@ export async function GET(req, { params }) {
       customerHistory = [];
     }
 
-    console.log('Processed customer history:', customerHistory);
+    //console.log('Processed customer history:', customerHistory);
 
     // Get current stage from most recent entry
     const currentStage = customerHistory.length > 0 ? customerHistory[0].stage : null;
@@ -125,7 +125,7 @@ export async function POST(req, { params }) {
     const { customerId } = params
     const { stage, notes, user, direction } = await req.json()
 
-    console.log('POST stage history - Request body:', { stage, notes, user, direction })
+    //console.log('POST stage history - Request body:', { stage, notes, user, direction })
 
     if (!customerId || !stage) {
       return NextResponse.json(
@@ -138,7 +138,7 @@ export async function POST(req, { params }) {
     await checkFileTimestamp(STAGE_HISTORY_FILE)
 
     const stageHistory = await readStageHistory()
-    console.log('Current stage history:', stageHistory)
+    //console.log('Current stage history:', stageHistory)
     
     // Initialize customer history if it doesn't exist
     if (!stageHistory[customerId]) {

@@ -256,7 +256,7 @@ export default function CustomerDetail() {
   const loadStageHistory = async () => {
     try {
       setLoadingStageHistory(true)
-      console.log('Loading stage history for customer:', customerId)
+      //console.log('Loading stage history for customer:', customerId)
       
       const response = await fetch(`/api/stage-history/${customerId}`)
       const data = await response.json()
@@ -266,7 +266,7 @@ export default function CustomerDetail() {
         throw new Error(data.error || 'Failed to load stage history')
       }
       
-      console.log('Stage history loaded:', data)
+      //console.log('Stage history loaded:', data)
       
       const { customerHistory, stageCustomers, currentStage } = data
       const history = customerHistory || []
@@ -284,14 +284,14 @@ export default function CustomerDetail() {
       const endIndex = startIndex + stagesPerPage
       setPaginatedStageHistory(history.slice(startIndex, endIndex))
       
-      console.log('Stage history state updated:', {
-        customerHistory: history,
-        stageCustomers,
-        currentStage,
-        totalStages: history.length,
-        totalPages,
-        paginatedHistory: history.slice(startIndex, endIndex)
-      })
+      // console.log('Stage history state updated:', {
+      //   customerHistory: history,
+      //   stageCustomers,
+      //   currentStage,
+      //   totalStages: history.length,
+      //   totalPages,
+      //   paginatedHistory: history.slice(startIndex, endIndex)
+      // })
     } catch (error) {
       console.error('Error loading stage history:', error)
       showNotification(
@@ -332,8 +332,14 @@ export default function CustomerDetail() {
     try {
       const response = await fetch(`/api/products?customerId=${customerId}`)
       if (response.ok) {
-        const products = await response.json()
+        const data = await response.json()
+        // API might return an array directly or an object with a products/items field
+        const products = Array.isArray(data)
+          ? data
+          : (data.products || data.items || data.data || [])
         setCustomerProducts(products)
+      } else {
+        console.error('Failed to load products:', response.status, await response.text())
       }
     } catch (error) {
       console.error('Error loading products:', error)
@@ -549,8 +555,8 @@ export default function CustomerDetail() {
   const loadLinkedEnquiriesWithCustomerData = async (customerData) => {
     try {
       setLoadingEnquiries(true)
-      console.log('Loading enquiries for customer:', customerData)
-      console.log('Customer ID:', customerId)
+      //console.log('Loading enquiries for customer:', customerData)
+      //console.log('Customer ID:', customerId)
       
       // Request all enquiries with a high limit to get all records
       const response = await fetch(`/api/enquiries?limit=1000`)
@@ -558,7 +564,7 @@ export default function CustomerDetail() {
         const responseData = await response.json()
         // The API returns an object with enquiries array when paginated
         const allEnquiries = responseData.enquiries || responseData
-        console.log('All enquiries:', allEnquiries)
+        //console.log('All enquiries:', allEnquiries)
         
         // Filter enquiries that are linked to this customer
         const customerEnquiries = allEnquiries.filter(enquiry => {
@@ -566,21 +572,21 @@ export default function CustomerDetail() {
           const matchesName = enquiry.firstName?.toLowerCase() === customerData?.firstName?.toLowerCase() && 
                              enquiry.lastName?.toLowerCase() === customerData?.lastName?.toLowerCase()
           const matchesEmail = enquiry.email?.toLowerCase() === customerData?.email?.toLowerCase()
-          
-          console.log(`Enquiry ${enquiry.id}:`, {
-            matchesCustomerId,
-            matchesName,
-            matchesEmail,
-            enquiryCustomerId: enquiry.customerId,
-            currentCustomerId: customerId,
-            enquiryEmail: enquiry.email?.toLowerCase(),
-            customerEmail: customerData?.email?.toLowerCase()
-          })
-          
+
+          //console.log(`Enquiry ${enquiry.id}:`, {
+          //  matchesCustomerId,
+          //  matchesName,
+          //  matchesEmail,
+          //  enquiryCustomerId: enquiry.customerId,
+          //  currentCustomerId: customerId,
+          //  enquiryEmail: enquiry.email?.toLowerCase(),
+          //  customerEmail: customerData?.email?.toLowerCase()
+          //})
+
           return matchesCustomerId || matchesName || matchesEmail
         })
         
-        console.log('Filtered customer enquiries:', customerEnquiries)
+        //console.log('Filtered customer enquiries:', customerEnquiries)
         setLinkedEnquiries(customerEnquiries)
       }
     } catch (error) {

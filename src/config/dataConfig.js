@@ -1,10 +1,23 @@
 // Data configuration for Application
-// This file centralizes data file paths for easy management
-// Uses direct OneDrive paths with user-selectable folder
-
 import path from 'path'
 import os from 'os'
 import fs from 'fs'
+
+// MongoDB Configuration
+export const MONGODB_CONFIG = {
+  uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
+  dbName: process.env.MONGODB_DB || 'gkf',
+  collections: {
+    customers: 'customer',
+    enquiries: 'enquiry',
+    users: 'user',
+    authors: 'author',
+    products: 'product',
+    fees: 'fee',
+    notes: 'note',
+    stageHistory: 'stageHistory'
+  }
+}
 
 // Function to load saved OneDrive configuration
 const loadSavedConfig = () => {
@@ -93,7 +106,8 @@ export const getOneDrivePath = () => {
 }
 
 // Get the base data directory
-export const DATA_DIR = getOneDrivePath()
+export const DATA_DIR = "/Users/rajeshpote/Library/CloudStorage/OneDrive-SharedLibraries-onedrive/GK-Finance-Data/data"
+//getOneDrivePath()
 
 // Get the base OneDrive directory (parent of data folder)
 export const getOneDriveBaseDir = () => {

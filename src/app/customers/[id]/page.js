@@ -2181,25 +2181,47 @@ export default function CustomerDetail() {
                       // View Mode
                       <div className="row small">
                         <div className="col-md-6">
-                          <div className="mb-0 small">
-                            <strong>Ref:</strong> {product.productReferenceNumber || 'N/A'} | <strong>Cat:</strong> {product.category || 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Ref:</span> 
+                            <span className="detail-value">{product.productReferenceNumber || 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>Lender:</strong> {product.lender || 'N/A'} | <strong>Type:</strong> {product.mortgageType || 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Category:</span> 
+                            <span className="detail-value">{product.category || 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>Address:</strong> {product.propertyAddress || 'N/A'} {product.propertyPostcode && `(${product.propertyPostcode})`}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Lender:</span> 
+                            <span className="detail-value">{product.lender || 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Type:</span> 
+                            <span className="detail-value">{product.mortgageType || 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Address:</span> 
+                            <span className="detail-value">{product.propertyAddress || 'N/A'} {product.propertyPostcode && `(${product.propertyPostcode})`}</span>
                           </div>
                         </div>
                         <div className="col-md-6">
-                          <div className="mb-0 small">
-                            <strong>Loan:</strong> {product.loanAmount ? formatCurrency(product.loanAmount) : 'N/A'} | <strong>Value:</strong> {product.propertyValue ? formatCurrency(product.propertyValue) : 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Loan:</span> 
+                            <span className="detail-value fw-bold text-success">{product.loanAmount ? formatCurrency(product.loanAmount) : 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>LTV:</strong> {product.ltv ? `${product.ltv}%` : 'N/A'} | <strong>ROI:</strong> {product.rateOfInterest ? `${product.rateOfInterest}%` : 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Value:</span> 
+                            <span className="detail-value fw-bold text-success">{product.propertyValue ? formatCurrency(product.propertyValue) : 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>Submitted:</strong> {product.submissionDate || 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">LTV:</span> 
+                            <span className="detail-value">{product.ltv ? `${product.ltv}%` : 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">ROI:</span> 
+                            <span className="detail-value">{product.rateOfInterest ? `${product.rateOfInterest}%` : 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Submitted:</span> 
+                            <span className="detail-value">{product.submissionDate || 'N/A'}</span>
                           </div>
                         </div>
                       </div>

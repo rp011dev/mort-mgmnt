@@ -1027,6 +1027,7 @@ export default function CustomerDetail() {
       const requestBody = {
         feeId,
         status,
+        customerId,
         paymentMethod
       }
       
@@ -1057,7 +1058,7 @@ export default function CustomerDetail() {
   }
 
   const deleteFee = async (feeId) => {
-    const fee = customerFees.find(f => f.id === feeId)
+    const fee = customerFees.find(f => f.feeId === feeId)
     
     const confirmDelete = () => {
       performDeleteFee(feeId)
@@ -1079,7 +1080,7 @@ export default function CustomerDetail() {
 
   const performDeleteFee = async (feeId) => {
     try {
-      const response = await fetch(`/api/fees?feeId=${feeId}`, {
+      const response = await fetch(`/api/fees?feeId=${feeId}&customerId=${customerId}`, {
         method: 'DELETE'
       })
 
@@ -1106,7 +1107,7 @@ export default function CustomerDetail() {
 
   const handleStatusChange = (fee, newStatus) => {
     // Add changing animation
-    setChangingFeeStatus(fee.id)
+    setChangingFeeStatus(fee.feeId)
     
     if (newStatus === 'PAID' && fee.status !== 'PAID') {
       // Show payment method selection for new PAID status
@@ -1115,7 +1116,7 @@ export default function CustomerDetail() {
       setShowPaymentMethodModal(true)
     } else {
       // Direct status update for other changes
-      updateFeeStatus(fee.id, newStatus, null)
+      updateFeeStatus(fee.feeId, newStatus, null)
     }
     
     // Remove animation after 600ms
@@ -1124,7 +1125,7 @@ export default function CustomerDetail() {
 
   const confirmPaymentMethod = () => {
     if (selectedFeeForPayment) {
-      updateFeeStatus(selectedFeeForPayment.id, 'PAID', selectedPaymentMethod)
+      updateFeeStatus(selectedFeeForPayment.feeId, 'PAID', selectedPaymentMethod)
       setShowPaymentMethodModal(false)
       setSelectedFeeForPayment(null)
       // Remove changing animation after modal closes
@@ -2569,7 +2570,7 @@ export default function CustomerDetail() {
                             
                             return (
                               <tr 
-                                key={fee.id} 
+                                key={fee.feeId} 
                                 className={`fee-row-tooltip ${isOverdue ? 'fee-row-overdue' : ''}`}
                                 data-tooltip={tooltipContent}
                                 style={{ cursor: 'help' }}
@@ -2606,7 +2607,7 @@ export default function CustomerDetail() {
                                 </td>
                                 <td>
                                   <select
-                                    className={`form-select form-select-sm fee-status-dropdown fee-status-${fee.status.toLowerCase()} ${changingFeeStatus === fee.id ? 'fee-status-changing' : ''}`}
+                                    className={`form-select form-select-sm fee-status-dropdown fee-status-${fee.status.toLowerCase()} ${changingFeeStatus === fee.feeId ? 'fee-status-changing' : ''}`}
                                     value={fee.status}
                                     onChange={(e) => handleStatusChange(fee, e.target.value)}
                                   >
@@ -2621,7 +2622,7 @@ export default function CustomerDetail() {
                                 <td>
                                   <button 
                                     className="btn btn-sm btn-outline-danger fee-action-btn"
-                                    onClick={() => deleteFee(fee.id)}
+                                    onClick={() => deleteFee(fee.feeId)}
                                     title="Delete Fee"
                                   >
                                     <i className="bi bi-trash"></i>

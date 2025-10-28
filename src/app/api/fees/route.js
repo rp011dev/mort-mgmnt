@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-import { DATA_PATHS } from '../../../config/dataConfig.js'
+import { getCollection } from '../../../utils/mongoDb'
+import { MONGODB_CONFIG } from '../../../config/dataConfig'
 import { 
   ConcurrencyError, 
-  addVersioningToRecord, 
-  validateVersion, 
-  checkFileTimestamp, 
   createConflictResponse 
 } from '../../../utils/concurrencyManager.js'
 
-const feesFilePath = DATA_PATHS.fees
+// Get collection reference once
+let feesCollection = null
+
+async function getFeesCollection() {
+  if (!feesCollection) {
+    feesCollection = await getCollection(MONGODB_CONFIG.collections.fees)
+  }
+  return feesCollection
+}
 
 export async function GET(request) {
   try {
@@ -19,37 +23,35 @@ export async function GET(request) {
     const feeId = searchParams.get('feeId')
     const status = searchParams.get('status') // Filter by status: PAID, UNPAID, NA
     
-    const fileContents = fs.readFileSync(feesFilePath, 'utf8')
-    const fees = JSON.parse(fileContents)
+    const collection = await getFeesCollection()
     
-    let targetFees = []
+    // Build query filter
+    let query = {}
     
-    // Get fees for specific customer
     if (customerId) {
-      targetFees = fees[customerId] || []
-    } else if (feeId) {
-      // Find specific fee across all customers
-      for (const customerFees of Object.values(fees)) {
-        const fee = customerFees.find(f => f.id === feeId)
-        if (fee) {
-          return NextResponse.json(fee)
-        }
+      query.customerId = customerId
+    }
+    
+    if (feeId) {
+      query.feeId = feeId
+      // Find specific fee
+      const fee = await collection.findOne(query, { projection: { _id: 0 } })
+      if (fee) {
+        return NextResponse.json(fee)
       }
       return NextResponse.json({ error: 'Fee not found' }, { status: 404 })
-    } else {
-      // Return all fees flattened
-      targetFees = Object.values(fees).flat()
     }
     
-    // Filter by status if provided
     if (status) {
-      targetFees = targetFees.filter(fee => fee.status === status.toUpperCase())
+      query.status = status.toUpperCase()
     }
     
-    // Sort by addedDate (newest first)
-    targetFees.sort((a, b) => new Date(b.addedDate) - new Date(a.addedDate))
+    // Get all matching fees
+    const fees = await collection.find(query, { 
+      projection: { _id: 0 } 
+    }).sort({ addedDate: -1 }).toArray()
     
-    return NextResponse.json(targetFees)
+    return NextResponse.json(fees)
   } catch (error) {
     console.error('Error reading fees:', error)
     return NextResponse.json({ error: 'Failed to read fees' }, { status: 500 })
@@ -74,16 +76,26 @@ export async function POST(request) {
       }, { status: 400 })
     }
     
-    // Check file timestamp before reading
-    await checkFileTimestamp(feesFilePath)
+    const collection = await getFeesCollection()
     
-    // Read current fees
-    const fileContents = fs.readFileSync(feesFilePath, 'utf8')
-    const fees = JSON.parse(fileContents)
+    // Find the highest feeId to generate the next one
+    const lastFee = await collection.find({})
+      .sort({ feeId: -1 })
+      .limit(1)
+      .toArray()
+    
+    // Extract numeric part from feeId (e.g., "FEE123" -> 123)
+    let nextFeeNumber = 1
+    if (lastFee.length > 0 && lastFee[0].feeId) {
+      const lastFeeNumber = parseInt(lastFee[0].feeId.replace(/^FEE/, '')) || 0
+      nextFeeNumber = lastFeeNumber + 1
+    }
+    
+    const newFeeId = `FEE${nextFeeNumber}`
     
     // Generate new fee
     const newFee = {
-      id: `FEE${Date.now()}`,
+      feeId: newFeeId,
       customerId: customerId,
       type: type,
       amount: parseFloat(amount),
@@ -95,22 +107,25 @@ export async function POST(request) {
       addedBy: 'Current User',
       description: description || '',
       paymentMethod: status.toUpperCase() === 'PAID' ? paymentMethod : null,
-      reference: reference || `${type.substring(0, 3).toUpperCase()}-${Date.now()}`
+      reference: reference || `${type.substring(0, 3).toUpperCase()}-${Date.now()}`,
+      _version: 1,
+      _lastModified: new Date().toISOString()
     }
     
-    // Add versioning to the new fee
-    addVersioningToRecord(newFee)
+    // Insert the fee
+    const result = await collection.insertOne(newFee)
     
-    // Add fee to customer
-    if (!fees[customerId]) {
-      fees[customerId] = []
+    if (result.acknowledged) {
+      return NextResponse.json({
+        success: true,
+        message: 'Fee added successfully',
+        fee: newFee,
+        feeId: newFeeId,
+        _id: result.insertedId
+      })
+    } else {
+      return NextResponse.json({ error: 'Failed to save fee' }, { status: 500 })
     }
-    fees[customerId].push(newFee)
-    
-    // Write back to file
-    fs.writeFileSync(feesFilePath, JSON.stringify(fees, null, 2))
-    
-    return NextResponse.json(newFee)
   } catch (error) {
     if (error instanceof ConcurrencyError) {
       return createConflictResponse(error.message, error.conflictData)
@@ -122,11 +137,11 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const { feeId, status, paymentMethod, paidDate, version } = await request.json()
+    const { feeId, customerId, status, paymentMethod, paidDate, version } = await request.json()
     
-    if (!feeId || !status) {
+    if (!feeId || !customerId || !status) {
       return NextResponse.json({ 
-        error: 'FeeId and status are required' 
+        error: 'FeeId, customerId, and status are required' 
       }, { status: 400 })
     }
     
@@ -138,55 +153,64 @@ export async function PUT(request) {
       }, { status: 400 })
     }
     
-    // Check file timestamp before reading
-    await checkFileTimestamp(feesFilePath)
+    const collection = await getFeesCollection()
     
-    // Read current fees
-    const fileContents = fs.readFileSync(feesFilePath, 'utf8')
-    const fees = JSON.parse(fileContents)
+    // Find current fee using both feeId and customerId
+    const currentFee = await collection.findOne({ 
+      feeId: feeId,
+      customerId: customerId 
+    })
     
-    // Find and update the fee
-    let feeFound = false
-    for (const customerId in fees) {
-      const customerFees = fees[customerId]
-      const feeIndex = customerFees.findIndex(f => f.id === feeId)
-      
-      if (feeIndex !== -1) {
-        const currentFee = customerFees[feeIndex]
-        
-        // Validate version for concurrency control
-        if (version) {
-          validateVersion(currentFee, version)
-        }
-        
-        // Update the fee
-        customerFees[feeIndex].status = status.toUpperCase()
-        customerFees[feeIndex].lastModified = new Date().toISOString()
-        
-        if (status.toUpperCase() === 'PAID') {
-          customerFees[feeIndex].paidDate = paidDate || new Date().toISOString()
-          customerFees[feeIndex].paymentMethod = paymentMethod || customerFees[feeIndex].paymentMethod
-        } else {
-          customerFees[feeIndex].paidDate = null
-          customerFees[feeIndex].paymentMethod = null
-        }
-        
-        // Update versioning
-        addVersioningToRecord(customerFees[feeIndex])
-        
-        feeFound = true
-        break
-      }
-    }
-    
-    if (!feeFound) {
+    if (!currentFee) {
       return NextResponse.json({ error: 'Fee not found' }, { status: 404 })
     }
     
-    // Write back to file
-    fs.writeFileSync(feesFilePath, JSON.stringify(fees, null, 2))
+    // Validate version for concurrency control
+    if (version && currentFee._version !== version) {
+      return createConflictResponse('Version mismatch', {
+        serverVersion: currentFee._version,
+        clientVersion: version,
+        serverData: currentFee
+      })
+    }
     
-    return NextResponse.json({ message: 'Fee updated successfully' })
+    // Prepare update data
+    const updateData = {
+      status: status.toUpperCase(),
+      _version: (currentFee._version || 0) + 1,
+      _lastModified: new Date().toISOString()
+    }
+    
+    if (status.toUpperCase() === 'PAID') {
+      updateData.paidDate = paidDate || new Date().toISOString()
+      updateData.paymentMethod = paymentMethod || currentFee.paymentMethod
+    } else {
+      updateData.paidDate = null
+      updateData.paymentMethod = null
+    }
+    
+    // Update the fee with version check
+    const result = await collection.findOneAndUpdate(
+      { 
+        feeId: feeId,
+        customerId: customerId,
+        _version: version || currentFee._version 
+      },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    )
+    
+    if (!result) {
+      return NextResponse.json({ 
+        error: 'Failed to update fee, possible concurrent modification' 
+      }, { status: 409 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Fee updated successfully',
+      fee: result
+    })
   } catch (error) {
     if (error instanceof ConcurrencyError) {
       return createConflictResponse(error.message, error.conflictData)
@@ -200,47 +224,53 @@ export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url)
     const feeId = searchParams.get('feeId')
+    const customerId = searchParams.get('customerId')
     const version = searchParams.get('version')
     
-    if (!feeId) {
-      return NextResponse.json({ error: 'FeeId is required' }, { status: 400 })
+    if (!feeId || !customerId) {
+      return NextResponse.json({ 
+        error: 'FeeId and customerId are required' 
+      }, { status: 400 })
     }
     
-    // Check file timestamp before reading
-    await checkFileTimestamp(feesFilePath)
+    const collection = await getFeesCollection()
     
-    // Read current fees
-    const fileContents = fs.readFileSync(feesFilePath, 'utf8')
-    const fees = JSON.parse(fileContents)
+    // Find current fee first to check version
+    const currentFee = await collection.findOne({ 
+      feeId: feeId,
+      customerId: customerId 
+    })
     
-    // Find and delete the fee
-    let feeFound = false
-    for (const customerId in fees) {
-      const customerFees = fees[customerId]
-      const feeIndex = customerFees.findIndex(f => f.id === feeId)
-      
-      if (feeIndex !== -1) {
-        const currentFee = customerFees[feeIndex]
-        
-        // Validate version for concurrency control
-        if (version) {
-          validateVersion(currentFee, version)
-        }
-        
-        customerFees.splice(feeIndex, 1)
-        feeFound = true
-        break
-      }
-    }
-    
-    if (!feeFound) {
+    if (!currentFee) {
       return NextResponse.json({ error: 'Fee not found' }, { status: 404 })
     }
     
-    // Write back to file
-    fs.writeFileSync(feesFilePath, JSON.stringify(fees, null, 2))
+    // Validate version for concurrency control
+    if (version && currentFee._version !== parseInt(version)) {
+      return createConflictResponse('Version mismatch', {
+        serverVersion: currentFee._version,
+        clientVersion: parseInt(version),
+        serverData: currentFee
+      })
+    }
     
-    return NextResponse.json({ message: 'Fee deleted successfully' })
+    // Delete the fee with version check
+    const result = await collection.deleteOne({ 
+      feeId: feeId,
+      customerId: customerId,
+      _version: version ? parseInt(version) : currentFee._version
+    })
+    
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ 
+        error: 'Failed to delete fee, possible concurrent modification' 
+      }, { status: 409 })
+    }
+    
+    return NextResponse.json({ 
+      success: true,
+      message: 'Fee deleted successfully'
+    })
   } catch (error) {
     if (error instanceof ConcurrencyError) {
       return createConflictResponse(error.message, error.conflictData)

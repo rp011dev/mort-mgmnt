@@ -1150,7 +1150,7 @@ export default function CustomerDetail() {
         },
         body: JSON.stringify({
           customerId: customerId,
-          product: newProductData
+          ...newProductData
         })
       })
 
@@ -1181,7 +1181,7 @@ export default function CustomerDetail() {
         body: JSON.stringify({
           customerId: customerId,
           productIndex: index,
-          product: productFormData
+          ...productFormData
         })
       })
 
@@ -1206,7 +1206,8 @@ export default function CustomerDetail() {
     }
 
     try {
-      const response = await fetch(`/api/products?customerId=${customerId}&productIndex=${index}`, {
+      const product = customerProducts[index]
+      const response = await fetch(`/api/products?customerId=${customerId}&productIndex=${index}&productId=${product.productId}&version=${product._version}`, {
         method: 'DELETE'
       })
 

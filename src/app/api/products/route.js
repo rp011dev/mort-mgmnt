@@ -23,12 +23,10 @@ export async function GET(request) {
     
     if (customerId) {
       // Find single document for the specific customer
-      const customerDoc = await collection.findOne(
-        { customerId }
-      );
-
-      // Return the products array or empty array if no document found
-      const products = customerDoc?.products || [];
+      const products = await collection.find(
+        { customerId },
+        { projection: { _id: 0 } }
+      ).toArray();
       return NextResponse.json(products);
     } else {
       // For listing all products, maintain the grouping
@@ -63,17 +61,28 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { customerId, product } = body;
+    const { customerId, ...product } = body;
     
-    if (!customerId || !product) {
-      return NextResponse.json({ error: 'Customer ID and product data are required' }, { status: 400 });
+    if (!customerId) {
+      return NextResponse.json({ error: 'Customer ID is required' }, { status: 400 });
     }
     
     const collection = await getProductsCollection();
     
+    // Find the highest productId to generate the next one
+    const lastProduct = await collection.find({})
+      .sort({ productId: -1 })
+      .limit(1)
+      .toArray();
+    
+    const nextProductId = lastProduct.length > 0 
+      ? (parseInt(lastProduct[0].productId) || 0) + 1 
+      : 1;
+    
     // Prepare the product document
     const newProduct = {
       ...product,
+      productId: nextProductId,
       customerId,
       _version: 1,
       _lastModified: new Date().toISOString()
@@ -86,7 +95,8 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         message: 'Product added successfully',
-        productId: result.insertedId
+        productId: nextProductId,
+        _id: result.insertedId
       });
     } else {
       return NextResponse.json({ error: 'Failed to save product' }, { status: 500 });
@@ -104,17 +114,17 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { customerId, productId, product, version } = body;
+    const { customerId, productId, version, ...productData } = body;
     
-    if (!customerId || !productId || !product) {
-      return NextResponse.json({ error: 'Customer ID, product ID, and product data are required' }, { status: 400 });
+    if (!customerId || !productId) {
+      return NextResponse.json({ error: 'Customer ID and product ID are required' }, { status: 400 });
     }
     
     const collection = await getProductsCollection();
     
     // Find current product
     const currentProduct = await collection.findOne({ 
-      _id: productId,
+      productId: productId,
       customerId 
     });
     
@@ -131,9 +141,13 @@ export async function PUT(request) {
       });
     }
     
-    // Prepare update data
+    // Prepare update data - extract only the product fields (excluding metadata)
+    const { _version: _, _lastModified: __, ...fieldsToUpdate } = productData;
+    
     const updateData = {
-      ...product,
+      ...fieldsToUpdate,
+      customerId, // Ensure customerId is included
+      productId, // Ensure productId is included
       _version: (currentProduct._version || 0) + 1,
       _lastModified: new Date().toISOString()
     };
@@ -141,7 +155,7 @@ export async function PUT(request) {
     // Update the product with version check
     const result = await collection.findOneAndUpdate(
       { 
-        _id: productId,
+        productId: productId,
         customerId,
         _version: version || currentProduct._version 
       },
@@ -185,10 +199,9 @@ export async function DELETE(request) {
     
     // Find current product first to check version
     const currentProduct = await collection.findOne({ 
-      _id: productId,
+      productId: parseInt(productId),
       customerId 
     });
-    
     if (!currentProduct) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -204,7 +217,7 @@ export async function DELETE(request) {
     
     // Delete the product with version check
     const result = await collection.deleteOne({ 
-      _id: productId,
+      productId: parseInt(productId),
       customerId,
       _version: version ? parseInt(version) : currentProduct._version
     });

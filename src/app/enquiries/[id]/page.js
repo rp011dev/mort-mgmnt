@@ -135,7 +135,7 @@ export default function EnquiryDetails({ params }) {
 
       const savedNote = await response.json()
       // Add new note at the beginning (top) of the array for newest first display
-      setEnquiryNotes(prev => Array.isArray(prev) ? [savedNote, ...prev] : [savedNote])
+      setEnquiryNotes(prev => Array.isArray(prev) ? [savedNote.note, ...prev] : [savedNote.note])
       setNewNote('')
     } catch (error) {
       console.error('Error adding note:', error)

@@ -1,58 +1,73 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-import { DATA_PATHS } from '../../../config/dataConfig.js'
+import { getCollection } from '../../../utils/mongoDb'
+import { MONGODB_CONFIG } from '../../../config/dataConfig'
 import { 
   ConcurrencyError, 
-  addVersioningToRecord, 
-  validateVersion, 
-  checkFileTimestamp, 
   createConflictResponse 
 } from '../../../utils/concurrencyManager.js'
 
-const notesFilePath = DATA_PATHS.notes
+// Get collection reference once
+let notesCollection = null
+
+async function getNotesCollection() {
+  if (!notesCollection) {
+    notesCollection = await getCollection(MONGODB_CONFIG.collections.notes)
+  }
+  return notesCollection
+}
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const customerId = searchParams.get('customerId')
     const enquiryId = searchParams.get('enquiryId')
+    const noteId = searchParams.get('noteId')
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 10
     const sortOrder = searchParams.get('sortOrder') || 'desc' // desc = newest first, asc = oldest first
     
-    const fileContents = fs.readFileSync(notesFilePath, 'utf8')
-    const notes = JSON.parse(fileContents)
+    const collection = await getNotesCollection()
     
-    let targetNotes = []
+    // Build query filter
+    let query = {}
     
-    // Get notes for specific customer or enquiry
-    if (customerId) {
-      targetNotes = notes[customerId] || []
-    } else if (enquiryId) {
-      targetNotes = notes[enquiryId] || []
-    } else {
-      // If no specific ID, return all notes flattened
-      targetNotes = Object.values(notes).flat()
+    // Determine referenceId (customerId or enquiryId)
+    const referenceId = customerId || enquiryId
+    
+    if (referenceId) {
+      query.referenceId = referenceId
     }
     
-    // Sort notes by timestamp
-    const sortedNotes = [...targetNotes].sort((a, b) => {
-      const dateA = new Date(a.timestamp)
-      const dateB = new Date(b.timestamp)
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB
-    })
+    // If specific noteId is requested
+    if (noteId) {
+      query.id = noteId
+      const note = await collection.findOne(query, { projection: { _id: 0 } })
+      if (note) {
+        return NextResponse.json(note)
+      }
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
     
-    // Calculate pagination
-    const totalNotes = sortedNotes.length
+    // Count total notes for pagination
+    const totalNotes = await collection.countDocuments(query)
     const totalPages = Math.ceil(totalNotes / limit)
     const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedNotes = sortedNotes.slice(startIndex, endIndex)
+    
+    // Determine sort order
+    const sortDirection = sortOrder === 'desc' ? -1 : 1
+    
+    // Get paginated notes
+    const notes = await collection.find(query, {
+      projection: { _id: 0 }
+    })
+    .sort({ timestamp: sortDirection })
+    .skip(startIndex)
+    .limit(limit)
+    .toArray()
     
     // Return paginated response
     return NextResponse.json({
-      notes: paginatedNotes,
+      notes: notes,
       pagination: {
         currentPage: page,
         totalPages: totalPages,
@@ -61,7 +76,7 @@ export async function GET(request) {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
         startIndex: startIndex + 1,
-        endIndex: Math.min(endIndex, totalNotes)
+        endIndex: Math.min(startIndex + notes.length, totalNotes)
       }
     })
   } catch (error) {
@@ -74,47 +89,204 @@ export async function POST(request) {
   try {
     const { customerId, enquiryId, note, author, stage } = await request.json()
     
-    // Determine the target ID (either customerId or enquiryId)
-    const targetId = customerId || enquiryId
+    // Determine the referenceId (either customerId or enquiryId)
+    const referenceId = customerId || enquiryId
     
-    if (!targetId) {
-      return NextResponse.json({ error: 'Either customerId or enquiryId must be provided' }, { status: 400 })
+    if (!referenceId) {
+      return NextResponse.json({ 
+        error: 'Either customerId or enquiryId must be provided' 
+      }, { status: 400 })
     }
     
-    // Check file timestamp before reading
-    await checkFileTimestamp(notesFilePath)
+    if (!note) {
+      return NextResponse.json({ 
+        error: 'Note content is required' 
+      }, { status: 400 })
+    }
     
-    // Read current notes
-    const fileContents = fs.readFileSync(notesFilePath, 'utf8')
-    const notes = JSON.parse(fileContents)
+    const collection = await getNotesCollection()
+    
+    // Find the highest note ID to generate the next one
+    const lastNote = await collection.find({})
+      .sort({ id: -1 })
+      .limit(1)
+      .toArray()
+    
+    // Extract numeric part from id (e.g., "NOTE123" -> 123)
+    let nextNoteNumber = 1
+    if (lastNote.length > 0 && lastNote[0].id) {
+      const lastNoteNumber = parseInt(lastNote[0].id.replace(/^NOTE/, '')) || 0
+      nextNoteNumber = lastNoteNumber + 1
+    }
+    
+    const newNoteId = `NOTE${nextNoteNumber}`
+    const currentTimestamp = new Date().toISOString()
     
     // Generate new note
     const newNote = {
-      id: `NOTE${Date.now()}`,
+      id: newNoteId,
+      referenceId: referenceId,
       author: author || 'Current User',
-      stage: stage,
+      stage: stage || null,
       note: note,
-      timestamp: new Date().toISOString()
+      timestamp: currentTimestamp,
+      _version: 1,
+      _lastModified: currentTimestamp,
+      _createdAt: currentTimestamp
     }
     
-    // Add versioning to the new note
-    addVersioningToRecord(newNote)
+    // Insert the note
+    const result = await collection.insertOne(newNote)
     
-    // Add note to customer or enquiry
-    if (!notes[targetId]) {
-      notes[targetId] = []
+    if (result.acknowledged) {
+      return NextResponse.json({
+        success: true,
+        message: 'Note added successfully',
+        note: newNote,
+        noteId: newNoteId,
+        _id: result.insertedId
+      })
+    } else {
+      return NextResponse.json({ error: 'Failed to save note' }, { status: 500 })
     }
-    notes[targetId].push(newNote)
-    
-    // Write back to file
-    fs.writeFileSync(notesFilePath, JSON.stringify(notes, null, 2))
-    
-    return NextResponse.json(newNote)
   } catch (error) {
     if (error instanceof ConcurrencyError) {
       return createConflictResponse(error.message, error.conflictData)
     }
     console.error('Error saving note:', error)
     return NextResponse.json({ error: 'Failed to save note' }, { status: 500 })
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const { noteId, referenceId, note, author, stage, version } = await request.json()
+    
+    if (!noteId || !referenceId) {
+      return NextResponse.json({ 
+        error: 'NoteId and referenceId are required' 
+      }, { status: 400 })
+    }
+    
+    const collection = await getNotesCollection()
+    
+    // Find current note using both noteId and referenceId
+    const currentNote = await collection.findOne({ 
+      id: noteId,
+      referenceId: referenceId 
+    })
+    
+    if (!currentNote) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
+    
+    // Validate version for concurrency control
+    if (version && currentNote._version !== version) {
+      return createConflictResponse('Version mismatch', {
+        serverVersion: currentNote._version,
+        clientVersion: version,
+        serverData: currentNote
+      })
+    }
+    
+    // Prepare update data
+    const updateData = {
+      _version: (currentNote._version || 0) + 1,
+      _lastModified: new Date().toISOString()
+    }
+    
+    // Only update fields that are provided
+    if (note !== undefined) updateData.note = note
+    if (author !== undefined) updateData.author = author
+    if (stage !== undefined) updateData.stage = stage
+    
+    // Update the note with version check
+    const result = await collection.findOneAndUpdate(
+      { 
+        id: noteId,
+        referenceId: referenceId,
+        _version: version || currentNote._version 
+      },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    )
+    
+    if (!result) {
+      return NextResponse.json({ 
+        error: 'Failed to update note, possible concurrent modification' 
+      }, { status: 409 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Note updated successfully',
+      note: result
+    })
+  } catch (error) {
+    if (error instanceof ConcurrencyError) {
+      return createConflictResponse(error.message, error.conflictData)
+    }
+    console.error('Error updating note:', error)
+    return NextResponse.json({ error: 'Failed to update note' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const noteId = searchParams.get('noteId')
+    const referenceId = searchParams.get('referenceId')
+    const version = searchParams.get('version')
+    
+    if (!noteId || !referenceId) {
+      return NextResponse.json({ 
+        error: 'NoteId and referenceId are required' 
+      }, { status: 400 })
+    }
+    
+    const collection = await getNotesCollection()
+    
+    // Find current note first to check version
+    const currentNote = await collection.findOne({ 
+      id: noteId,
+      referenceId: referenceId 
+    })
+    
+    if (!currentNote) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
+    
+    // Validate version for concurrency control
+    if (version && currentNote._version !== parseInt(version)) {
+      return createConflictResponse('Version mismatch', {
+        serverVersion: currentNote._version,
+        clientVersion: parseInt(version),
+        serverData: currentNote
+      })
+    }
+    
+    // Delete the note with version check
+    const result = await collection.deleteOne({ 
+      id: noteId,
+      referenceId: referenceId,
+      _version: version ? parseInt(version) : currentNote._version
+    })
+    
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ 
+        error: 'Failed to delete note, possible concurrent modification' 
+      }, { status: 409 })
+    }
+    
+    return NextResponse.json({ 
+      success: true,
+      message: 'Note deleted successfully'
+    })
+  } catch (error) {
+    if (error instanceof ConcurrencyError) {
+      return createConflictResponse(error.message, error.conflictData)
+    }
+    console.error('Error deleting note:', error)
+    return NextResponse.json({ error: 'Failed to delete note' }, { status: 500 })
   }
 }

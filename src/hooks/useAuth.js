@@ -59,12 +59,30 @@ export function useAuth(requireAuth = true) {
     checkAuth()
   }, [requireAuth, router])
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setUser(null)
-    setAuthenticated(false)
-    router.push('/login')
+  const logout = async () => {
+    try {
+      // Call logout API to log the event
+      const token = localStorage.getItem('token')
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Logout API error:', error)
+      // Continue with logout even if API call fails
+    } finally {
+      // Clear local storage and redirect
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      setUser(null)
+      setAuthenticated(false)
+      router.push('/login')
+    }
   }
 
   return { user, loading, authenticated, logout }

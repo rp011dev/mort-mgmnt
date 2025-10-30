@@ -690,12 +690,29 @@ export default function CustomerDetail() {
         ...prev,
         currentStage: newStage
       }))
-      setStageHistory(stageHistoryData.customerHistory)
-      setCurrentStageCustomers(stageHistoryData.stageCustomers || [])
+      
+      const history = stageHistoryData.customerHistory || []
+      setStageHistory(history)
+      setCustomerCurrentStage(stageHistoryData.currentStage)
+      setTotalStages(history.length)
+      
+      // Calculate total pages
+      const totalPages = Math.ceil(history.length / stagesPerPage)
+      setStageTotalPages(totalPages)
       
       // Reset to first page when new entry is added
       setStageCurrentPage(1)
-      updateStageHistoryPagination(stageHistoryData.customerHistory)
+      
+      // Set paginated data for first page
+      const startIndex = 0
+      const endIndex = stagesPerPage
+      setPaginatedStageHistory(history.slice(startIndex, endIndex))
+
+      showNotification(
+        `Stage moved ${direction} successfully`,
+        'success',
+        'Stage Updated'
+      )
 
     } catch (error) {
       console.error('Error updating stage:', error)
@@ -2437,20 +2454,28 @@ export default function CustomerDetail() {
               </div>
 
               <div className="d-flex gap-2">
-                <button
-                  className="btn btn-outline-secondary"
-                  onClick={() => moveToStage(stages[getCurrentStageIndex() - 1], 'backward')}
-                  disabled={!canMoveToPreviousStage()}
-                >
-                  ← {canMoveToPreviousStage() ? stageDisplayNames[stages[getCurrentStageIndex() - 1]] : 'Previous Stage'}
-                </button>
-                <button
-                  className="btn btn-outline-primary"
-                  onClick={() => moveToStage(stages[getCurrentStageIndex() + 1], 'forward')}
-                  disabled={!canMoveToNextStage()}
-                >
-                  {canMoveToNextStage() ? stageDisplayNames[stages[getCurrentStageIndex() + 1]] : 'Next Stage'} →
-                </button>
+                {canMoveToPreviousStage() && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={() => moveToStage(stages[getCurrentStageIndex() - 1], 'backward')}
+                  >
+                    ← {stageDisplayNames[stages[getCurrentStageIndex() - 1]]}
+                  </button>
+                )}
+                {canMoveToNextStage() && (
+                  <button
+                    className="btn btn-outline-primary"
+                    onClick={() => moveToStage(stages[getCurrentStageIndex() + 1], 'forward')}
+                  >
+                    {stageDisplayNames[stages[getCurrentStageIndex() + 1]]} →
+                  </button>
+                )}
+                {!canMoveToPreviousStage() && !canMoveToNextStage() && (
+                  <div className="text-muted small">
+                    <i className="bi bi-check-circle text-success me-1"></i>
+                    Journey complete
+                  </div>
+                )}
               </div>
             </div>
           </div>

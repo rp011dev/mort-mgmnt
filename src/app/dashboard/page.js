@@ -1,22 +1,33 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function Dashboard() {
+  const { user, loading: authLoading, logout } = useAuth()
   const [customers, setCustomers] = useState([])
   const [enquiries, setEnquiries] = useState([])
   const [fees, setFees] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('applications')
+  const [hoveredTab, setHoveredTab] = useState(null)
+  const [showAlerts, setShowAlerts] = useState({
+    oneMonth: false,
+    threeMonths: false,
+    sixMonths: false
+  })
 
   useEffect(() => {
-    loadData()
-    
-    // Set up auto-refresh every 30 seconds for real-time updates
-    const interval = setInterval(loadData, 30000)
-    
-    return () => clearInterval(interval)
-  }, [])
+    if (!authLoading) {
+      loadData()
+      
+      // Set up auto-refresh every 30 seconds for real-time updates
+      const interval = setInterval(loadData, 30000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [authLoading])
 
   const loadAllData = async (endpoint, dataKey = null, supportsPagination = true) => {
     if (!supportsPagination) {
@@ -93,19 +104,10 @@ export default function Dashboard() {
       setProducts(productsData)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
-      setError('Failed to load dashboard data')
     } finally {
       setLoading(false)
     }
   }
-  
-  const [activeTab, setActiveTab] = useState('applications')
-  const [hoveredTab, setHoveredTab] = useState(null)
-  const [showAlerts, setShowAlerts] = useState({
-    oneMonth: false,
-    threeMonths: false,
-    sixMonths: false
-  })
 
   const getStageStats = () => {
     const stats = {}
@@ -1005,6 +1007,20 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
         </div>
       </div>
     )

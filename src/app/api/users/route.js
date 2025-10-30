@@ -1,22 +1,32 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-import { DATA_PATHS } from '../../../config/dataConfig.js'
+import { getCollection } from '../../../utils/mongoDb'
+import { MONGODB_CONFIG } from '../../../config/dataConfig'
 
-const usersFilePath = DATA_PATHS.users
+// Get collection reference once
+let usersColl = null
+
+async function getUsersCollection() {
+  if (!usersColl) {
+    usersColl = await getCollection(MONGODB_CONFIG.collections.users)
+  }
+  return usersColl
+}
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get('activeOnly')
     
-    const fileContents = fs.readFileSync(usersFilePath, 'utf8')
-    let users = JSON.parse(fileContents)
+    const usersCollection = await getUsersCollection()
     
-    // Filter for active users only if requested
-    if (activeOnly === 'true') {
-      users = users.filter(user => user.active === true)
-    }
+    // Build query
+    const query = activeOnly === 'true' ? { active: true } : {}
+    
+    // Fetch users from MongoDB
+    let users = await usersCollection.find(query).toArray()
+    
+    // Remove passwords from response
+    users = users.map(({ password, _id, ...user }) => user)
     
     return NextResponse.json(users)
   } catch (error) {
@@ -29,27 +39,35 @@ export async function POST(request) {
   try {
     const userData = await request.json()
     
-    // Read current users
-    const fileContents = fs.readFileSync(usersFilePath, 'utf8')
-    const users = JSON.parse(fileContents)
+    const usersCollection = await getUsersCollection()
     
-    // Generate new user ID
-    const newId = `user${String(users.length + 1).padStart(3, '0')}`
+    // Get the highest ID
+    const lastUser = await usersCollection
+      .find()
+      .sort({ id: -1 })
+      .limit(1)
+      .toArray()
+    
+    const lastId = lastUser.length > 0 ? parseInt(lastUser[0].id) : 0
+    const newId = String(lastId + 1)
     
     // Create new user
     const newUser = {
       id: newId,
-      ...userData,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role || 'Advisor',
+      password: userData.password, // Should be hashed in production
       active: true
     }
     
-    // Add to users array
-    users.push(newUser)
+    // Insert into MongoDB
+    await usersCollection.insertOne(newUser)
     
-    // Write back to file
-    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2))
+    // Remove password from response
+    const { password, _id, ...userWithoutPassword } = newUser
     
-    return NextResponse.json(newUser, { status: 201 })
+    return NextResponse.json(userWithoutPassword, { status: 201 })
   } catch (error) {
     console.error('Error creating user:', error)
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
@@ -64,27 +82,26 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
     
-    // Read current users
-    const fileContents = fs.readFileSync(usersFilePath, 'utf8')
-    const users = JSON.parse(fileContents)
+    const usersCollection = await getUsersCollection()
     
-    // Find and update the user
-    const userIndex = users.findIndex(u => u.id === userId)
-    if (userIndex === -1) {
+    // Don't allow ID to be changed
+    const { id, _id, ...updateData } = updates
+    
+    // Update user in MongoDB
+    const result = await usersCollection.findOneAndUpdate(
+      { id: userId },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    )
+    
+    if (!result) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
     
-    // Update the user while preserving the ID
-    users[userIndex] = {
-      ...users[userIndex],
-      ...updates,
-      id: userId // Ensure ID doesn't change
-    }
+    // Remove password from response
+    const { password, _id: mongoId, ...userWithoutPassword } = result
     
-    // Write back to file
-    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2))
-    
-    return NextResponse.json(users[userIndex])
+    return NextResponse.json(userWithoutPassword)
   } catch (error) {
     console.error('Error updating user:', error)
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })

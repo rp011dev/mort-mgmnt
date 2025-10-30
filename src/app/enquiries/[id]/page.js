@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUser } from '../../../context/UserContext'
+import { useAuth } from '../../../hooks/useAuth'
 
 export default function EnquiryDetails({ params }) {
+  const { user, loading: authLoading, logout } = useAuth()
   const { currentUser } = useUser()
   const [enquiry, setEnquiry] = useState(null)
   const [enquiryNotes, setEnquiryNotes] = useState([])
@@ -560,6 +562,20 @@ export default function EnquiryDetails({ params }) {
   useEffect(() => {
     loadCustomers()
   }, [])
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

@@ -2,8 +2,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '../../../hooks/useAuth'
 
 export default function NewEnquiry() {
+  const { user, loading: authLoading, logout } = useAuth()
+  const router = useRouter()
   const [users, setUsers] = useState([])
   const [formData, setFormData] = useState({
     firstName: '',
@@ -29,7 +32,6 @@ export default function NewEnquiry() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState('')
-  const router = useRouter()
 
   useEffect(() => {
     loadUsers()
@@ -148,6 +150,20 @@ export default function NewEnquiry() {
 
   const lenders = ['Halifax', 'Nationwide', 'Barclays', 'HSBC', 'Santander', 'Legal & General', 'Other']
   const activeUsers = users.filter(user => user.active)
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container py-5">

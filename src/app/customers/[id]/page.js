@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useUser } from '../../../context/UserContext'
+import { useAuth } from '../../../hooks/useAuth'
 import ConfirmModal from '../../../components/ConfirmModal'
 import NotificationToast from '../../../components/NotificationToast'
 import CustomerDocuments from '../../../components/CustomerDocuments'
@@ -17,11 +18,11 @@ import {
 } from '../../../utils/feesManager'
 
 export default function CustomerDetail() {
+  const { user, loading: authLoading, logout } = useAuth()
   const params = useParams()
   const router = useRouter()
   const customerId = params.id
   const { currentUser } = useUser()
-  
   const [customer, setCustomer] = useState(null)
   const [customerNotes, setCustomerNotes] = useState([])
   const [customerProducts, setCustomerProducts] = useState([])
@@ -1640,6 +1641,20 @@ export default function CustomerDetail() {
 
   const scheduleFaceToFaceMeeting = () => {
     openMeetingModal('face-to-face')
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {

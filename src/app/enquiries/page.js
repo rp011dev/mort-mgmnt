@@ -2,12 +2,14 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { useAuth } from '../../hooks/useAuth'
 
 // Tell Next.js this is a dynamic page
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 
 function EnquiriesContent() {
+  const { user, loading: authLoading, logout } = useAuth()
   const searchParams = useSearchParams()
   const [enquiries, setEnquiries] = useState([])
   const [allEnquiries, setAllEnquiries] = useState([])
@@ -283,6 +285,20 @@ function EnquiriesContent() {
     }
 
     return rangeWithDots.filter((item, index, array) => array.indexOf(item) === index)
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -1,10 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useAuth } from '../hooks/useAuth'
 import UserSelector from './UserSelector'
 
 export default function Navigation() {
   const pathname = usePathname()
+  const { user, logout } = useAuth(false) // Don't require auth for navigation component
 
   const isActive = (path) => {
     if (path === '/' && pathname === '/') return true
@@ -95,8 +97,30 @@ export default function Navigation() {
             </li>
           </ul>
           
-          <div className="d-flex align-items-center h-100" style={{ position: 'relative', zIndex: 1050 }}>
-            <UserSelector />
+          <div className="d-flex align-items-center gap-3 h-100" style={{ position: 'relative', zIndex: 1050 }}>
+            {user ? (
+              // Show logged-in user info and logout button
+              <div className="d-flex align-items-center gap-2">
+                <span className="text-white d-flex align-items-center">
+                  <i className="bi bi-person-circle me-2" style={{ fontSize: '1.5rem' }}></i>
+                  <span>
+                    <small className="d-block" style={{ lineHeight: '1.2', opacity: 0.8 }}></small>
+                    <strong style={{ lineHeight: '1.2' }}>{user.name}</strong>
+                  </span>
+                </span>
+                <button 
+                  onClick={logout}
+                  className="btn btn-outline-light btn-sm"
+                  title="Logout"
+                >
+                  <i className="bi bi-box-arrow-right me-1"></i>
+                  Logout
+                </button>
+              </div>
+            ) : (
+              // Hide user selector when not logged in (login page will be shown by auth)
+              <div></div>
+            )}
           </div>
         </div>
       </div>

@@ -15,7 +15,8 @@ export const MONGODB_CONFIG = {
     products: 'product',
     fees: 'fee',
     notes: 'note',
-    stageHistory: 'stageHistory'
+    stageHistory: 'stageHistory',
+    user: 'user'
   }
 }
 

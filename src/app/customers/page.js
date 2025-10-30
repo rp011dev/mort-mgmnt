@@ -2,12 +2,14 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { useAuth } from '../../hooks/useAuth'
 
 // Tell Next.js this is a dynamic page
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 
 function CustomersContent() {
+  const { user, loading: authLoading, logout } = useAuth()
   const searchParams = useSearchParams()
   const [customers, setCustomers] = useState([])
   const [allCustomers, setAllCustomers] = useState([]) // For filter dropdown options
@@ -278,6 +280,20 @@ function CustomersContent() {
     }
     
     return pageNumbers
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

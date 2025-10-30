@@ -1,10 +1,27 @@
 'use client';
 
 import React from 'react';
+import { useAuth } from '../../../hooks/useAuth';
 import OneDriveStatusComponent from '../../../components/OneDriveStatusComponent';
 import OneDriveFolderPicker from '../../../components/OneDriveFolderPicker';
 
 export default function OneDrivePage() {
+  const { user, loading: authLoading, logout } = useAuth();
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       

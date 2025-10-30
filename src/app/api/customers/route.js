@@ -177,8 +177,7 @@ export async function PUT(request) {
   try {
     const requestData = await request.json()
     const { customerId, updates, version } = requestData
-    
-    if (!customerId) {
+   if (!customerId) {
       return NextResponse.json({ error: 'Customer ID is required' }, { status: 400 })
     }
     
@@ -206,14 +205,14 @@ export async function PUT(request) {
     }
     
     // Prepare update data with version increment
-    const { _id, ...baseUpdateData } = {
-      ...currentCustomer,
+    const updateData = {
       ...updates,
-      id: customerId, // Ensure ID doesn't change
       updatedAt: new Date().toISOString(),
       _version: currentVersion + 1  // Increment version
     }
 
+    // Remove _id if present in updates to avoid conflicts
+    delete updateData._id;
     
     // Update in MongoDB with optimistic locking
     const result = await customersCollection.findOneAndUpdate(
@@ -222,8 +221,7 @@ export async function PUT(request) {
         _version: currentVersion  // Only update if version matches
       },
       { 
-        $set: baseUpdateData,
-        $currentDate: { lastModified: true }
+        $set: updateData
       },
       { 
         returnDocument: 'after'
@@ -243,7 +241,6 @@ export async function PUT(request) {
     if (error instanceof ConcurrencyError) {
       return createConflictResponse(error.message, error.conflictData)
     }
-
     return NextResponse.json({ error: 'Failed to update customer' }, { status: 500 })
   }
 }

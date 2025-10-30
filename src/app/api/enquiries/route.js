@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../utils/mongoDb';
 import { MONGODB_CONFIG } from '../../../config/dataConfig';
 import { ConcurrencyError, createConflictResponse } from '../../../utils/concurrencyManager.js';
+import { getUserFromRequest, createAuditFields } from '../../../utils/authMiddleware';
 
 // Get collection reference once
 let enquiriesCollection = null;
@@ -109,6 +110,9 @@ export async function GET(request) {
 // Named export for POST method
 export async function POST(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const enquiryData = await request.json();
     
     if (!enquiryData) {
@@ -139,6 +143,15 @@ export async function POST(request) {
       : 0;
     const newId = lastId + 1;
 
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? createAuditFields(user, true) : {
+      _createdBy: 'System',
+      _createdAt: timestamp,
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+
     // Create new enquiry with all required fields
     const newEnquiry = {
       id: `ENQ${String(newId).padStart(3, '0')}`,
@@ -161,8 +174,8 @@ export async function POST(request) {
       annualIncome: enquiryData.annualIncome || 0,
       preferredLender: enquiryData.preferredLender || '',
       mortgageType: enquiryData.mortgageType || 'Repayment',
-      _version: 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: 1
     };
 
     // Insert the new enquiry
@@ -188,6 +201,9 @@ export async function POST(request) {
 // Named export for PUT method
 export async function PUT(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const { searchParams } = new URL(request.url);
     const enquiryId = searchParams.get('enquiryId');
     const { version, ...enquiryData } = await request.json();
@@ -214,11 +230,21 @@ export async function PUT(request) {
       });
     }
     
-    // Prepare update data with versioning
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? {
+      _modifiedBy: user.name || user.email,
+      _lastModified: timestamp
+    } : {
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
+    // Prepare update data with versioning and audit trail
     const updateData = {
       ...enquiryData,
-      _version: (currentEnquiry._version || 0) + 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: (currentEnquiry._version || 0) + 1
     };
     
     // Update the enquiry

@@ -7,6 +7,7 @@ import {
   validateVersion, 
   createConflictResponse 
 } from '../../../../utils/concurrencyManager.js'
+import { getUserFromRequest, createAuditFields } from '../../../../utils/authMiddleware'
 
 // Get collection reference once
 let stageHistoryColl = null
@@ -87,8 +88,11 @@ export async function GET(req, { params }) {
 // POST endpoint to add new stage history entry for a customer
 export async function POST(req, { params }) {
   try {
+    // Extract user from token for audit trail
+    const loggedInUser = getUserFromRequest(req)
+    
     const { customerId } = params
-    const { stage, notes, user, direction } = await req.json()
+    const { stage, notes, direction } = await req.json()
 
     if (!customerId || !stage) {
       return NextResponse.json(
@@ -102,18 +106,31 @@ export async function POST(req, { params }) {
     // Get the next available ID
     const nextId = await getNextStageHistoryId()
 
+    // ALWAYS use logged-in user's name for audit trail (ignore any user passed from frontend)
+    const userName = loggedInUser ? (loggedInUser.name || loggedInUser.email) : 'System'
+    
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = loggedInUser ? createAuditFields(loggedInUser, true) : {
+      _createdBy: userName,
+      _createdAt: timestamp,
+      _modifiedBy: userName,
+      _lastModified: timestamp
+    }
+
     // Create new history entry
     const newEntry = {
       customerId,
       id: nextId,
       stage,
-      timestamp: new Date().toISOString(),
+      timestamp: timestamp,
       notes: notes || `Stage moved ${direction || 'to'} ${stage}`,
-      user: user || 'System'
+      user: userName,
+      ...auditFields
     }
 
-    // Add versioning to the new entry
-    addVersioningToRecord(newEntry)
+    // Add versioning to the new entry (pass userName to avoid overwriting audit fields)
+    addVersioningToRecord(newEntry, userName)
 
     // Insert the new entry into MongoDB
     await collection.insertOne(newEntry)

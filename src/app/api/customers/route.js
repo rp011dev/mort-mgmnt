@@ -9,6 +9,7 @@ import {
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../utils/mongoDb';
 import { MONGODB_CONFIG } from '../../../config/dataConfig';
+import { getUserFromRequest, createAuditFields } from '../../../utils/authMiddleware';
 
 // Get collection reference once
 let customersColl = null;
@@ -104,6 +105,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const customerData = await request.json()
     const customersCollection =  await getCustomersCollection();
     
@@ -144,6 +148,15 @@ export async function POST(request) {
     // Create new customer with generated IDs (remove any incoming id to ensure fresh generation)
     const { id: incomingId, productReferenceNumber: incomingRef, ...cleanCustomerData } = customerData
     
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? createAuditFields(user, true) : {
+      _createdBy: 'System',
+      _createdAt: timestamp,
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
     const newCustomer = {
       id: newId,
       productReferenceNumber: productReferenceNumber,
@@ -152,13 +165,13 @@ export async function POST(request) {
       customerAccountType: cleanCustomerData.customerAccountType || 'Sole',
       jointHolders: cleanCustomerData.jointHolders || [],
       submissionDate: cleanCustomerData.submissionDate || new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      ...auditFields,
       _version: 0  // Initialize version number
     }
 
-    // Add versioning to the new customer
-    addVersioningToRecord(newCustomer)
+    // Add versioning to the new customer (pass user name to avoid overwriting audit fields)
+    const userName = user ? (user.name || user.email) : 'System'
+    addVersioningToRecord(newCustomer, userName)
     
     // Insert into MongoDB
     await customersCollection.insertOne(newCustomer)
@@ -175,6 +188,9 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const requestData = await request.json()
     const { customerId, updates, version } = requestData
    if (!customerId) {
@@ -204,10 +220,20 @@ export async function PUT(request) {
       }, { status: 409 })
     }
     
-    // Prepare update data with version increment
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? {
+      _modifiedBy: user.name || user.email,
+      _lastModified: timestamp
+    } : {
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
+    // Prepare update data with version increment and audit trail
     const updateData = {
       ...updates,
-      updatedAt: new Date().toISOString(),
+      ...auditFields,
       _version: currentVersion + 1  // Increment version
     }
 

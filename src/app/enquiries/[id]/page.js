@@ -118,15 +118,16 @@ export default function EnquiryDetails({ params }) {
     try {
       setAddingNote(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           enquiryId: params.id,
           note: newNote.trim(),
-          author: currentUser ? currentUser.name : 'Unknown User',
           stage: enquiry?.status || 'new'
         })
       })

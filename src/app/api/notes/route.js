@@ -5,6 +5,7 @@ import {
   ConcurrencyError, 
   createConflictResponse 
 } from '../../../utils/concurrencyManager.js'
+import { getUserFromRequest, createAuditFields } from '../../../utils/authMiddleware'
 
 // Get collection reference once
 let notesCollection = null
@@ -87,6 +88,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const { customerId, enquiryId, note, author, stage } = await request.json()
     
     // Determine the referenceId (either customerId or enquiryId)
@@ -122,17 +126,27 @@ export async function POST(request) {
     const newNoteId = `NOTE${nextNoteNumber}`
     const currentTimestamp = new Date().toISOString()
     
+    // Use logged-in user's name or provided author or fallback
+    const noteAuthor = user ? (user.name || user.email) : (author || 'System')
+    
+    // Add audit trail fields
+    const auditFields = user ? createAuditFields(user, true) : {
+      _createdBy: noteAuthor,
+      _createdAt: currentTimestamp,
+      _modifiedBy: noteAuthor,
+      _lastModified: currentTimestamp
+    }
+    
     // Generate new note
     const newNote = {
       id: newNoteId,
       referenceId: referenceId,
-      author: author || 'Current User',
+      author: noteAuthor,
       stage: stage || null,
       note: note,
       timestamp: currentTimestamp,
-      _version: 1,
-      _lastModified: currentTimestamp,
-      _createdAt: currentTimestamp
+      ...auditFields,
+      _version: 1
     }
     
     // Insert the note
@@ -160,6 +174,9 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const { noteId, referenceId, note, author, stage, version } = await request.json()
     
     if (!noteId || !referenceId) {
@@ -189,10 +206,20 @@ export async function PUT(request) {
       })
     }
     
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? {
+      _modifiedBy: user.name || user.email,
+      _lastModified: timestamp
+    } : {
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
     // Prepare update data
     const updateData = {
-      _version: (currentNote._version || 0) + 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: (currentNote._version || 0) + 1
     }
     
     // Only update fields that are provided

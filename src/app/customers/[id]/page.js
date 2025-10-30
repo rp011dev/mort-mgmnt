@@ -665,17 +665,18 @@ export default function CustomerDetail() {
       }
 
       // Then add a new stage history entry
+      const token = localStorage.getItem('token')
       const stageHistoryResponse = await fetch(`/api/stage-history/${customerId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           stage: newStage,
           previousStage: customer.currentStage,
           direction: direction,
-          notes: `Stage moved ${direction} via customer management`,
-          user: currentUser ? currentUser.name : 'Unknown User'
+          notes: `Stage moved ${direction} via customer management`
         })
       })
 
@@ -869,15 +870,16 @@ export default function CustomerDetail() {
     try {
       setAddingNote(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
           note: newNote.trim(),
-          author: currentUser ? currentUser.name : 'Unknown User',
           stage: customer.currentStage
         })
       })
@@ -1004,10 +1006,12 @@ export default function CustomerDetail() {
 
     try {
       setSavingFee(true)
+      const token = localStorage.getItem('token')
       const response = await fetch('/api/fees', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId,
@@ -1054,10 +1058,12 @@ export default function CustomerDetail() {
         requestBody.paidDate = new Date().toISOString()
       }
 
+      const token = localStorage.getItem('token')
       const response = await fetch('/api/fees', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(requestBody),
       })
@@ -1162,10 +1168,12 @@ export default function CustomerDetail() {
     try {
       setSavingProduct(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
@@ -1192,10 +1200,12 @@ export default function CustomerDetail() {
     try {
       setSavingProduct(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/products`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,

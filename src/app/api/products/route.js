@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../utils/mongoDb';
 import { MONGODB_CONFIG } from '../../../config/dataConfig';
 import { ConcurrencyError, createConflictResponse } from '../../../utils/concurrencyManager.js';
+import { getUserFromRequest, createAuditFields } from '../../../utils/authMiddleware';
 
 // Get collection reference once
 let productsCollection = null;
@@ -60,6 +61,9 @@ export async function GET(request) {
 // POST - Add a new product for a customer
 export async function POST(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const body = await request.json();
     const { customerId, ...product } = body;
     
@@ -79,13 +83,22 @@ export async function POST(request) {
       ? (parseInt(lastProduct[0].productId) || 0) + 1 
       : 1;
     
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? createAuditFields(user, true) : {
+      _createdBy: 'System',
+      _createdAt: timestamp,
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
     // Prepare the product document
     const newProduct = {
       ...product,
       productId: nextProductId,
       customerId,
-      _version: 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: 1
     };
     
     // Insert the product
@@ -113,6 +126,9 @@ export async function POST(request) {
 // PUT - Update an existing product
 export async function PUT(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const body = await request.json();
     const { customerId, productId, version, ...productData } = body;
     
@@ -141,6 +157,16 @@ export async function PUT(request) {
       });
     }
     
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? {
+      _modifiedBy: user.name || user.email,
+      _lastModified: timestamp
+    } : {
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
     // Prepare update data - extract only the product fields (excluding metadata)
     const { _version: _, _lastModified: __, ...fieldsToUpdate } = productData;
     
@@ -148,8 +174,8 @@ export async function PUT(request) {
       ...fieldsToUpdate,
       customerId, // Ensure customerId is included
       productId, // Ensure productId is included
-      _version: (currentProduct._version || 0) + 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: (currentProduct._version || 0) + 1
     };
     
     // Update the product with version check

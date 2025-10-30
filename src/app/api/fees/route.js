@@ -5,6 +5,7 @@ import {
   ConcurrencyError, 
   createConflictResponse 
 } from '../../../utils/concurrencyManager.js'
+import { getUserFromRequest, createAuditFields } from '../../../utils/authMiddleware'
 
 // Get collection reference once
 let feesCollection = null
@@ -60,6 +61,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const { customerId, type, amount, currency = 'GBP', status, dueDate, description, paymentMethod, reference } = await request.json()
     
     if (!customerId || !type || !amount || !status) {
@@ -93,6 +97,16 @@ export async function POST(request) {
     
     const newFeeId = `FEE${nextFeeNumber}`
     
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const userName = user ? (user.name || user.email) : 'System'
+    const auditFields = user ? createAuditFields(user, true) : {
+      _createdBy: 'System',
+      _createdAt: timestamp,
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
     // Generate new fee
     const newFee = {
       feeId: newFeeId,
@@ -102,14 +116,14 @@ export async function POST(request) {
       currency: currency,
       status: status.toUpperCase(),
       dueDate: dueDate || null,
-      paidDate: status.toUpperCase() === 'PAID' ? new Date().toISOString() : null,
-      addedDate: new Date().toISOString(),
-      addedBy: 'Current User',
+      paidDate: status.toUpperCase() === 'PAID' ? timestamp : null,
+      addedDate: timestamp,
+      addedBy: userName,
       description: description || '',
       paymentMethod: status.toUpperCase() === 'PAID' ? paymentMethod : null,
       reference: reference || `${type.substring(0, 3).toUpperCase()}-${Date.now()}`,
-      _version: 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: 1
     }
     
     // Insert the fee
@@ -137,6 +151,9 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
+    // Extract user from token for audit trail
+    const user = getUserFromRequest(request)
+    
     const { feeId, customerId, status, paymentMethod, paidDate, version } = await request.json()
     
     if (!feeId || !customerId || !status) {
@@ -174,15 +191,25 @@ export async function PUT(request) {
       })
     }
     
+    // Add audit trail fields
+    const timestamp = new Date().toISOString()
+    const auditFields = user ? {
+      _modifiedBy: user.name || user.email,
+      _lastModified: timestamp
+    } : {
+      _modifiedBy: 'System',
+      _lastModified: timestamp
+    }
+    
     // Prepare update data
     const updateData = {
       status: status.toUpperCase(),
-      _version: (currentFee._version || 0) + 1,
-      _lastModified: new Date().toISOString()
+      ...auditFields,
+      _version: (currentFee._version || 0) + 1
     }
     
     if (status.toUpperCase() === 'PAID') {
-      updateData.paidDate = paidDate || new Date().toISOString()
+      updateData.paidDate = paidDate || timestamp
       updateData.paymentMethod = paymentMethod || currentFee.paymentMethod
     } else {
       updateData.paidDate = null

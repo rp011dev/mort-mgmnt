@@ -16,11 +16,6 @@ body: JSON.stringify({
 })
 ```
 
-This `currentUser` was from the frontend state (likely from `UserSelector` component) which could be:
-- Outdated
-- Different from the logged-in user
-- Not synchronized with the JWT token
-
 ### 2. Backend Accepting Frontend User Value
 The backend API was accepting the `user` parameter from the request and using it as a fallback:
 
@@ -140,4 +135,3 @@ Now when "Gaurav Khanna" is logged in and changes a stage:
 
 ## Important Note
 
-The **UserSelector** component in the navigation is for **viewing/filtering** customers assigned to different users. It should NOT be used for determining who is making changes - that always comes from the JWT token of the logged-in user.

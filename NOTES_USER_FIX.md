@@ -1,7 +1,5 @@
 # Fix: Notes Using Wrong User Name
 
-## Problem
-Notes were being created with the `currentUser` from frontend state (likely from UserSelector component) instead of the actual logged-in user from JWT token.
 
 ## Files Updated
 
@@ -177,11 +175,4 @@ All user identity tracking now uses JWT token exclusively:
 - [ ] Logout and login as different user
 - [ ] Add notes again and verify new user's name is recorded
 
-## Important Note
 
-The **UserSelector** component in the navigation is for:
-- **Viewing** customers assigned to specific users
-- **Filtering** the customer list
-- **NOT** for determining who is making changes
-
-All operations (notes, stage changes, updates) use the JWT token of the logged-in user, not the UserSelector value.

@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../hooks/useAuth'
-import UserSelector from './UserSelector'
 
 export default function Navigation() {
   const pathname = usePathname()

@@ -21,14 +21,3 @@ export const MONGODB_CONFIG = {
   }
 }
 
-// Legacy data paths - kept for backward compatibility if needed
-// Note: All document storage now uses GridFS in MongoDB
-export const DATA_PATHS = {
-  // These are deprecated - kept only for reference
-  // All data is now stored in MongoDB collections
-}
-
-console.log('📁 Using MongoDB for all data storage')
-console.log('📁 Database:', MONGODB_CONFIG.database)
-
-export default DATA_PATHS

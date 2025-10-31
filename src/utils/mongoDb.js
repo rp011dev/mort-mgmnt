@@ -23,3 +23,12 @@ export async function getCollection(collectionName) {
   const db = client.db(MONGODB_CONFIG.dbName);
   return db.collection(collectionName);
 }
+
+/**
+ * Get database instance
+ * @returns {Promise<Db>} MongoDB database instance
+ */
+export async function getDb() {
+  const client = await connectToMongo();
+  return client.db(MONGODB_CONFIG.dbName);
+}

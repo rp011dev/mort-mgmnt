@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 
 export default function CustomerDocuments({ customerId }) {
-  const [customerDocuments, setCustomerDocuments] = useState({})
+  const [customerDocuments, setCustomerDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(null)
@@ -10,6 +10,7 @@ export default function CustomerDocuments({ customerId }) {
   const [selectedFiles, setSelectedFiles] = useState([])
   const [selectedDocumentType, setSelectedDocumentType] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(null)
 
   // Document types that can be uploaded
   const documentTypes = {
@@ -32,39 +33,27 @@ export default function CustomerDocuments({ customerId }) {
     try {
       setLoading(true)
       console.log('📄 Loading documents for customer:', customerId)
-      const response = await fetch(`/api/documents?customerId=${customerId}`)
+      
+      // Use GridFS API to load documents
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/documents-gridfs?customerId=${customerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
       console.log('📄 Documents API response status:', response.status)
+      
       if (response.ok) {
         const data = await response.json()
-        console.log('📄 Documents loaded:', data.documents?.length || 0, 'files')
-        // Organize documents by type
-        const docsByType = {}
+        console.log('📄 Documents loaded:', data.files?.length || 0, 'files')
         
-        // Initialize all document types
-        Object.keys(documentTypes).forEach(type => {
-          docsByType[type] = []
-        })
-        
-        // Group documents by type (based on file prefix or metadata)
-        data.documents.forEach(doc => {
-          // Try to determine document type from filename or use 'otherDocuments' as default
-          let docType = 'otherDocuments'
-          Object.keys(documentTypes).forEach(type => {
-            if (doc.name.toLowerCase().includes(type.toLowerCase())) {
-              docType = type
-            }
-          })
-          
-          docsByType[docType].push({
-            ...doc,
-            docType,
-            status: doc.status || 'received' // Default status
-          })
-        })
-        
-        setCustomerDocuments(docsByType)
+        // Set documents directly as array (GridFS returns array of files)
+        setCustomerDocuments(data.files || [])
       } else {
         console.error('📄 Failed to load documents:', response.status, response.statusText)
+        const errorData = await response.json()
+        console.error('📄 Error details:', errorData)
       }
     } catch (error) {
       console.error('📄 Error loading documents:', error)
@@ -97,44 +86,47 @@ export default function CustomerDocuments({ customerId }) {
     setUploadProgress({ [selectedDocumentType]: 0 })
 
     try {
-      const formData = new FormData()
-      formData.append('customerId', customerId)
-      formData.append('documentType', selectedDocumentType)
+      const token = localStorage.getItem('token')
       
-      selectedFiles.forEach(file => {
-        // Prefix filename with document type for easier categorization
-        const prefixedFile = new File([file], `${selectedDocumentType}_${file.name}`, { type: file.type })
-        formData.append('files', prefixedFile)
-      })
+      // Upload files one by one to GridFS
+      let uploadedCount = 0
+      const totalFiles = selectedFiles.length
 
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          const currentProgress = prev[selectedDocumentType] || 0
-          if (currentProgress >= 90) {
-            clearInterval(progressInterval)
-            return prev
-          }
-          return { ...prev, [selectedDocumentType]: currentProgress + 10 }
+      for (const file of selectedFiles) {
+        const formData = new FormData()
+        formData.append('file', file) // GridFS API expects 'file' not 'files'
+        formData.append('customerId', customerId)
+        formData.append('documentType', selectedDocumentType)
+        formData.append('status', 'received') // Default status
+
+        const response = await fetch('/api/documents-gridfs', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
         })
-      }, 200)
 
-      const response = await fetch('/api/documents', {
-        method: 'POST',
-        body: formData
-      })
+        if (response.ok) {
+          uploadedCount++
+          // Update progress
+          const progress = Math.round((uploadedCount / totalFiles) * 100)
+          setUploadProgress({ [selectedDocumentType]: progress })
+        } else {
+          const error = await response.json()
+          console.error('Upload failed for file:', file.name, error)
+          alert(`Upload failed for ${file.name}: ${error.error || 'Unknown error'}`)
+          break
+        }
+      }
 
-      clearInterval(progressInterval)
-      setUploadProgress({ [selectedDocumentType]: 100 })
-
-      if (response.ok) {
+      // Show success if all files uploaded
+      if (uploadedCount === totalFiles) {
         setTimeout(() => {
           setUploadProgress({})
           loadDocuments()
         }, 1000)
       } else {
-        const error = await response.json()
-        alert(`Upload failed: ${error.message}`)
         setUploadProgress({})
       }
     } catch (error) {
@@ -151,18 +143,41 @@ export default function CustomerDocuments({ customerId }) {
     }
   }
 
-  const handleDocumentStatusChange = async (docType, newStatus) => {
-    // Update status locally first for immediate feedback
-    setCustomerDocuments(prev => ({
-      ...prev,
-      [docType]: prev[docType].map(doc => ({
-        ...doc,
-        status: newStatus
-      }))
-    }))
-    
-    // Here you could add an API call to save the status change
-    // For now, we'll just update the local state
+  const handleDocumentStatusChange = async (fileId, newStatus) => {
+    try {
+      setUpdatingStatus(fileId)
+      
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/documents-gridfs', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fileId,
+          updates: { status: newStatus }
+        })
+      })
+
+      if (response.ok) {
+        // Update status locally for immediate feedback
+        setCustomerDocuments(prev => 
+          prev.map(doc => 
+            doc.fileId === fileId ? { ...doc, status: newStatus } : doc
+          )
+        )
+      } else {
+        const error = await response.json()
+        console.error('Failed to update status:', error)
+        alert(`Failed to update status: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error updating document status:', error)
+      alert('Failed to update status. Please try again.')
+    } finally {
+      setUpdatingStatus(null)
+    }
   }
 
   const getDocumentTypeInfo = (docType) => {
@@ -226,25 +241,29 @@ export default function CustomerDocuments({ customerId }) {
     return typeInfo[docType] || typeInfo.otherDocuments
   }
 
-  const handleDelete = async (filename) => {
-    if (!filename) {
-      alert('Document filename is not available')
+  const handleDelete = async (fileId, filename) => {
+    if (!fileId) {
+      alert('Document ID is not available')
       return
     }
     
     if (!confirm(`Are you sure you want to delete ${filename}?`)) return
 
-    setDeleting(filename)
+    setDeleting(fileId)
     try {
-      const response = await fetch(`/api/documents?customerId=${customerId}&filename=${encodeURIComponent(filename)}`, {
-        method: 'DELETE'
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/documents-gridfs?fileId=${fileId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
 
       if (response.ok) {
         await loadDocuments()
       } else {
         const error = await response.json()
-        alert(`Delete failed: ${error.message || 'Unknown error'}`)
+        alert(`Delete failed: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error deleting file:', error)
@@ -254,20 +273,28 @@ export default function CustomerDocuments({ customerId }) {
     }
   }
 
-  const handleDownload = (filename) => {
-    if (!filename) {
-      alert('Document filename is not available')
+  const handleDownload = (fileId, filename) => {
+    if (!fileId) {
+      alert('Document ID is not available')
       return
     }
-    window.open(`/api/documents/download?customerId=${customerId}&filename=${encodeURIComponent(filename)}`, '_blank')
+    
+    const token = localStorage.getItem('token')
+    // Create a link with authorization token in URL for download
+    const downloadUrl = `/api/documents-gridfs/download?fileId=${fileId}&token=${encodeURIComponent(token)}`
+    window.open(downloadUrl, '_blank')
   }
 
-  const handleView = (filename) => {
-    if (!filename) {
-      alert('Document filename is not available')
+  const handleView = (fileId, filename) => {
+    if (!fileId) {
+      alert('Document ID is not available')
       return
     }
-    window.open(`/api/documents/download?customerId=${customerId}&filename=${encodeURIComponent(filename)}&view=true`, '_blank')
+    
+    const token = localStorage.getItem('token')
+    // Create a link with authorization token in URL for viewing
+    const viewUrl = `/api/documents-gridfs/download?fileId=${fileId}&token=${encodeURIComponent(token)}&view=true`
+    window.open(viewUrl, '_blank')
   }
 
   const formatFileSize = (bytes) => {
@@ -305,8 +332,8 @@ export default function CustomerDocuments({ customerId }) {
   return (
     <>
       <div className="card mb-4">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">Document Status & Upload</h5>
+        <div className="card-header d-flex justify-content-between align-items-center py-1">
+          <h6 className="mb-0 fw-bold small">Document Status & Upload</h6>
           <button 
             className="btn btn-sm btn-primary"
             onClick={() => document.getElementById('document-upload-input').click()}
@@ -319,8 +346,8 @@ export default function CustomerDocuments({ customerId }) {
       
       <div className="card-body">
         <small className="text-muted d-flex align-items-center mb-3">
-          <i className="bi bi-cloud-check text-success me-1"></i>
-          Documents stored in OneDrive
+          <i className="bi bi-database text-success me-1"></i>
+          Documents stored in Database
         </small>
         
         {/* Hidden file input */}
@@ -348,7 +375,7 @@ export default function CustomerDocuments({ customerId }) {
             <strong>Click to browse</strong> or drag and drop files here
           </p>
           <small className="text-muted">
-            PDF, JPG, PNG, DOC, DOCX, TXT (Max 10MB each)
+            PDF, JPG, PNG, DOC, DOCX, TXT (No file size limit)
           </small>
         </div>
 
@@ -383,21 +410,8 @@ export default function CustomerDocuments({ customerId }) {
           </div>
         ) : (
           (() => {
-            // Flatten all documents into a single array for the table
-            const allDocuments = []
-            Object.entries(customerDocuments).forEach(([docType, documents]) => {
-              if (documents && documents.length > 0) {
-                documents.forEach((doc, index) => {
-                  console.log('📄 Processing document:', doc) // Debug log
-                  allDocuments.push({
-                    ...doc,
-                    docType,
-                    displayType: documentTypes[docType] || docType,
-                    status: doc.status || 'received'
-                  })
-                })
-              }
-            })
+            // customerDocuments is already an array from GridFS API
+            const allDocuments = customerDocuments || []
 
             return allDocuments.length > 0 ? (
               <div className="table-responsive">
@@ -414,35 +428,35 @@ export default function CustomerDocuments({ customerId }) {
                       .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate))
                       .map((doc, index) => (
                       <tr 
-                        key={`${doc.docType}-${index}`}
+                        key={doc.fileId || index}
                         className="table-row-tooltip"
-                        data-tooltip={`${getDocumentTypeInfo(doc.docType).title} | ${doc.name ? doc.name.replace(/^[^_]*_/, '') : 'Unknown'} | ${formatFileSize(doc.size)} | Uploaded: ${new Date(doc.uploadDate).toLocaleDateString('en-GB')}`}
+                        data-tooltip={`${getDocumentTypeInfo(doc.documentType).title} | ${doc.filename || 'Unknown'} | ${formatFileSize(doc.size)} | Uploaded: ${new Date(doc.uploadDate).toLocaleDateString('en-GB')}`}
                         style={{ cursor: 'help' }}
                       >
                         <td>
                           <div className="d-flex align-items-center">
                             <i 
-                              className={`bi ${getDocumentTypeInfo(doc.docType).icon} ${getDocumentTypeInfo(doc.docType).color} me-2 document-type-icon fast-tooltip`}
-                              title={`${getDocumentTypeInfo(doc.docType).title}\n${getDocumentTypeInfo(doc.docType).description}`}
+                              className={`bi ${getDocumentTypeInfo(doc.documentType).icon} ${getDocumentTypeInfo(doc.documentType).color} me-2 document-type-icon fast-tooltip`}
+                              title={`${getDocumentTypeInfo(doc.documentType).title}\n${getDocumentTypeInfo(doc.documentType).description}`}
                               style={{cursor: 'help'}}
                             ></i>
                             <strong 
-                              title={`File: ${doc.name || 'Unknown'}\nSize: ${formatFileSize(doc.size) || 'Unknown'}\nUploaded: ${new Date(doc.uploadDate).toLocaleString('en-GB')}`}
+                              title={`File: ${doc.filename || 'Unknown'}\nSize: ${formatFileSize(doc.size) || 'Unknown'}\nUploaded: ${new Date(doc.uploadDate).toLocaleString('en-GB')}\nUploaded by: ${doc.uploadedBy || 'Unknown'}`}
                               style={{cursor: 'help'}}
                               className="me-2 fast-tooltip"
                             >
-                              {doc.name ? doc.name.replace(/^[^_]*_/, '') : `${doc.docType}_${new Date(doc.uploadDate).getTime()}`}
+                              {doc.filename || `document_${new Date(doc.uploadDate).getTime()}`}
                             </strong>
                             <span 
                               className="document-info-icon ms-2 fast-tooltip"
-                              title={`Document Type: ${getDocumentTypeInfo(doc.docType).title}\nUploaded: ${new Date(doc.uploadDate).toLocaleDateString('en-GB', {
+                              title={`Document Type: ${getDocumentTypeInfo(doc.documentType).title}\nUploaded: ${new Date(doc.uploadDate).toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: 'short',
                                 year: 'numeric'
                               })} at ${new Date(doc.uploadDate).toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
                                 minute: '2-digit'
-                              })}\nSize: ${formatFileSize(doc.size)}`}
+                              })}\nSize: ${formatFileSize(doc.size)}\nUploaded by: ${doc.uploadedBy || 'Unknown'}`}
                             >
                               i
                             </span>
@@ -452,15 +466,16 @@ export default function CustomerDocuments({ customerId }) {
                           <select
                             className={`form-select form-select-sm ${
                               doc.status === 'verified' ? 'border-success text-success' :
-                              doc.status === 'in-review' ? 'border-warning text-warning' :
+                              doc.status === 'in review' ? 'border-warning text-warning' :
                               'border-primary text-primary'
                             }`}
                             value={doc.status}
-                            onChange={(e) => handleDocumentStatusChange(doc.docType, e.target.value)}
+                            onChange={(e) => handleDocumentStatusChange(doc.fileId, e.target.value)}
                             style={{minWidth: '120px'}}
+                            disabled={updatingStatus === doc.fileId}
                           >
                             <option value="received">Received</option>
-                            <option value="in-review">In Review</option>
+                            <option value="in review">In Review</option>
                             <option value="verified">Verified</option>
                           </select>
                         </td>
@@ -468,27 +483,27 @@ export default function CustomerDocuments({ customerId }) {
                           <div className="d-flex gap-1">
                             <button
                               className="btn btn-sm btn-outline-primary fee-action-btn"
-                              onClick={() => handleView(doc.name)}
+                              onClick={() => handleView(doc.fileId, doc.filename)}
                               title="View Document"
-                              disabled={!doc.name}
+                              disabled={!doc.fileId}
                             >
                               <i className="bi bi-eye"></i>
                             </button>
                             <button
                               className="btn btn-sm btn-outline-secondary fee-action-btn"
-                              onClick={() => handleDownload(doc.name)}
+                              onClick={() => handleDownload(doc.fileId, doc.filename)}
                               title="Download Document"
-                              disabled={!doc.name}
+                              disabled={!doc.fileId}
                             >
                               <i className="bi bi-download"></i>
                             </button>
                             <button
                               className="btn btn-sm btn-outline-danger fee-action-btn"
-                              onClick={() => handleDelete(doc.name)}
-                              disabled={deleting === doc.name || !doc.name}
+                              onClick={() => handleDelete(doc.fileId, doc.filename)}
+                              disabled={deleting === doc.fileId || !doc.fileId}
                               title="Delete Document"
                             >
-                              {deleting === doc.name ? (
+                              {deleting === doc.fileId ? (
                                 <div className="spinner-border spinner-border-sm" role="status">
                                   <span className="visually-hidden">Deleting...</span>
                                 </div>

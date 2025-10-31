@@ -101,13 +101,6 @@ export async function POST(request) {
     for (const file of files) {
       if (file.size === 0) continue
       
-      // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        return NextResponse.json({ 
-          error: `File ${file.name} is too large. Maximum size is 10MB.` 
-        }, { status: 400 })
-      }
-      
       // Get file extension and validate
       const extension = path.extname(file.name).toLowerCase()
       const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.txt']

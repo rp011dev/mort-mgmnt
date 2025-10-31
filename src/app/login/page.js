@@ -75,7 +75,8 @@ return (
 
                             {/* Welcome Text */}
                             <div className="text-center mb-3">
-                                <h6 className="fw-bold mb-0" style={{ textAlign: 'center' }}>Welcome Back!</h6>
+                                <h4 className="fw-bold mb-1" style={{ color: '#2d3748', letterSpacing: '-0.5px' }}>Welcome Back!</h4>
+                                <p className="text-muted small mb-0" style={{ fontSize: '0.875rem' }}>Sign in to your account to continue</p>
                             </div>
 
                             {/* Error Alert */}
@@ -95,9 +96,9 @@ return (
                             {/* Login Form */}
                             <form onSubmit={handleSubmit}>
                                 {/* Email Input */}
-                                <div className="mb-2">
-                                    <label htmlFor="email" className="form-label small mb-1">
-                                        <i className="bi bi-envelope me-1"></i>Email
+                                <div className="mb-3">
+                                    <label htmlFor="email" className="form-label fw-semibold mb-2" style={{ color: '#4a5568', fontSize: '0.875rem' }}>
+                                        <i className="bi bi-envelope me-2"></i>Email Address
                                     </label>
                                     <input
                                         id="email"
@@ -106,18 +107,24 @@ return (
                                         autoComplete="email"
                                         required
                                         className="form-control"
-                                        placeholder="Enter your email"
+                                        placeholder="you@example.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         disabled={loading}
-                                        style={{ borderRadius: '0.5rem' }}
+                                        style={{ 
+                                            borderRadius: '0.5rem', 
+                                            padding: '0.65rem 1rem',
+                                            fontSize: '0.95rem',
+                                            border: '1px solid #e2e8f0',
+                                            transition: 'all 0.2s'
+                                        }}
                                     />
                                 </div>
 
                                 {/* Password Input */}
-                                <div className="mb-2">
-                                    <label htmlFor="password" className="form-label small mb-1">
-                                        <i className="bi bi-lock me-1"></i>Password
+                                <div className="mb-3">
+                                    <label htmlFor="password" className="form-label fw-semibold mb-2" style={{ color: '#4a5568', fontSize: '0.875rem' }}>
+                                        <i className="bi bi-lock me-2"></i>Password
                                     </label>
                                     <div className="input-group">
                                         <input
@@ -131,14 +138,24 @@ return (
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             disabled={loading}
-                                            style={{ borderRadius: '0.5rem 0 0 0.5rem' }}
+                                            style={{ 
+                                                borderRadius: '0.5rem 0 0 0.5rem',
+                                                padding: '0.65rem 1rem',
+                                                fontSize: '0.95rem',
+                                                border: '1px solid #e2e8f0',
+                                                transition: 'all 0.2s'
+                                            }}
                                         />
                                         <button
-                                            className="btn btn-outline-secondary btn-sm"
+                                            className="btn btn-outline-secondary"
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
                                             disabled={loading}
-                                            style={{ borderRadius: '0 0.5rem 0.5rem 0' }}
+                                            style={{ 
+                                                borderRadius: '0 0.5rem 0.5rem 0',
+                                                border: '1px solid #e2e8f0',
+                                                borderLeft: 'none'
+                                            }}
                                         >
                                             <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
                                         </button>
@@ -146,12 +163,32 @@ return (
                                 </div>
 
                                 {/* Submit Button */}
-                                <div className="d-grid mt-3">
+                                <div className="d-grid mt-4">
                                     <button
                                         type="submit"
                                         disabled={loading}
                                         className="btn btn-primary"
-                                        style={{ borderRadius: '0.5rem' }}
+                                        style={{ 
+                                            borderRadius: '0.5rem',
+                                            padding: '0.75rem 1rem',
+                                            fontSize: '1rem',
+                                            fontWeight: '600',
+                                            letterSpacing: '0.025em',
+                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                            border: 'none',
+                                            boxShadow: '0 4px 6px rgba(102, 126, 234, 0.25)',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!loading) {
+                                                e.target.style.transform = 'translateY(-2px)'
+                                                e.target.style.boxShadow = '0 6px 12px rgba(102, 126, 234, 0.35)'
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.transform = 'translateY(0)'
+                                            e.target.style.boxShadow = '0 4px 6px rgba(102, 126, 234, 0.25)'
+                                        }}
                                     >
                                         {loading ? (
                                             <>

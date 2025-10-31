@@ -1199,22 +1199,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-cloud-arrow-up text-warning" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-warning mb-1" style={{fontSize: '1rem'}}>OneDrive Sync</h5>
-                <p className="card-text text-muted small mb-2">
-                  Sync customer documents and files with OneDrive
-                </p>
-                <Link href="/dashboard/onedrive" className="btn btn-warning btn-sm">
-                  Sync Files
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

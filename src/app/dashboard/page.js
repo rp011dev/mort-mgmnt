@@ -1148,58 +1148,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
-        {/* Quick Action Cards */}
-        <div className="row">
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-search text-primary" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-primary mb-1" style={{fontSize: '1rem'}}>Search Customers</h5>
-                <p className="card-text text-muted small mb-2">
-                  Find customers by name, email, phone, or postcode
-                </p>
-                <Link href="/" className="btn btn-primary btn-sm">
-                  Go to Search
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-people text-success" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-success mb-1" style={{fontSize: '1rem'}}>Customer Management</h5>
-                <p className="card-text text-muted small mb-2">
-                  View and manage all customers in the mortgage application pipeline
-                </p>
-                <Link href="/customers" className="btn btn-success btn-sm">
-                  Manage Customers
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-envelope text-info" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-info mb-1" style={{fontSize: '1rem'}}>Enquiry Management</h5>
-                <p className="card-text text-muted small mb-2">
-                  Monitor and manage all incoming enquiries and conversions
-                </p>
-                <Link href="/enquiries" className="btn btn-info btn-sm">
-                  View Enquiries
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+      
       </div>
     </div>
   )

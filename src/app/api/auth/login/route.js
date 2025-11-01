@@ -3,6 +3,8 @@ import { getCollection } from '@/utils/mongoDb'
 import { MONGODB_CONFIG } from '@/config/dataConfig'
 import { verifyPassword, generateToken } from '@/utils/auth'
 import { logSuccessfulLogin, logFailedLogin } from '@/utils/authAuditManager'
+export const dynamic = 'force-dynamic'
+
 
 let usersCollection = null
 

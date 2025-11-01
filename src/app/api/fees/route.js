@@ -6,6 +6,8 @@ import {
   createConflictResponse 
 } from '../../../utils/concurrencyManager.js'
 import { getUserFromRequest, createAuditFields } from '../../../utils/authMiddleware'
+export const dynamic = 'force-dynamic'
+
 
 // Get collection reference once
 let feesCollection = null

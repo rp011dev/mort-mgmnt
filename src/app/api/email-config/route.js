@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { emailConfig } from '../../../config/emailConfigManager'
+export const dynamic = 'force-dynamic'
+
 
 export async function GET() {
   try {

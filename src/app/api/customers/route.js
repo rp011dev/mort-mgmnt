@@ -4,6 +4,8 @@ import {
   addVersioningToRecord, 
   createConflictResponse 
 } from '../../../utils/concurrencyManager.js';
+export const dynamic = 'force-dynamic'
+
 
 
 import { NextResponse } from 'next/server';

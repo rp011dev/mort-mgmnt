@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getCollection } from '../../../utils/mongoDb'
 import { MONGODB_CONFIG } from '../../../config/dataConfig'
+export const dynamic = 'force-dynamic'
+
 
 // Get collection reference once
 let usersColl = null

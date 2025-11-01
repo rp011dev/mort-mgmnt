@@ -10,6 +10,8 @@ import {
   getFilesByStatus,
   searchFiles
 } from '@/utils/gridFsManager'
+export const dynamic = 'force-dynamic'
+
 
 // No file size limit - removed as per requirements
 

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/utils/authMiddleware'
 import { downloadFileFromGridFS } from '@/utils/gridFsManager'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET - Download a document
  * Query params:

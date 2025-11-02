@@ -10,7 +10,7 @@ async function hashPassword(password) {
 }
 
 // Hash the password
-const password = 'password123'
+const password = 'GKFAdminPWD@2025'  // Change this to your desired password
 
 hashPassword(password).then(hash => {
   console.log('\n=================================')

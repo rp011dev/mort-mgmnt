@@ -11,17 +11,25 @@ export class ConcurrencyError extends Error {
   }
 }
 
-export function addVersioningToRecord(record, userId = 'System Migration') {
+export function addVersioningToRecord(record, userId = 'System') {
   const now = new Date().toISOString()
   
   // Modify the record in place and also return it
   record._version = (record._version || 0) + 1
-  record._lastModified = now
-  record._modifiedBy = userId
+  
+  // Only set modification fields if they don't already exist
+  if (!record._lastModified) {
+    record._lastModified = now
+  }
+  if (!record._modifiedBy) {
+    record._modifiedBy = userId
+  }
   
   // Set creation info if not exists
   if (!record._createdAt) {
     record._createdAt = record.createdAt || now
+  }
+  if (!record._createdBy) {
     record._createdBy = userId
   }
   

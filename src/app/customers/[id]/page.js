@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useUser } from '../../../context/UserContext'
+import { useAuth } from '../../../hooks/useAuth'
 import ConfirmModal from '../../../components/ConfirmModal'
 import NotificationToast from '../../../components/NotificationToast'
 import CustomerDocuments from '../../../components/CustomerDocuments'
@@ -17,11 +18,11 @@ import {
 } from '../../../utils/feesManager'
 
 export default function CustomerDetail() {
+  const { user, loading: authLoading, logout } = useAuth()
   const params = useParams()
   const router = useRouter()
   const customerId = params.id
   const { currentUser } = useUser()
-  
   const [customer, setCustomer] = useState(null)
   const [customerNotes, setCustomerNotes] = useState([])
   const [customerProducts, setCustomerProducts] = useState([])
@@ -256,7 +257,7 @@ export default function CustomerDetail() {
   const loadStageHistory = async () => {
     try {
       setLoadingStageHistory(true)
-      console.log('Loading stage history for customer:', customerId)
+      //console.log('Loading stage history for customer:', customerId)
       
       const response = await fetch(`/api/stage-history/${customerId}`)
       const data = await response.json()
@@ -266,7 +267,7 @@ export default function CustomerDetail() {
         throw new Error(data.error || 'Failed to load stage history')
       }
       
-      console.log('Stage history loaded:', data)
+      //console.log('Stage history loaded:', data)
       
       const { customerHistory, stageCustomers, currentStage } = data
       const history = customerHistory || []
@@ -284,14 +285,14 @@ export default function CustomerDetail() {
       const endIndex = startIndex + stagesPerPage
       setPaginatedStageHistory(history.slice(startIndex, endIndex))
       
-      console.log('Stage history state updated:', {
-        customerHistory: history,
-        stageCustomers,
-        currentStage,
-        totalStages: history.length,
-        totalPages,
-        paginatedHistory: history.slice(startIndex, endIndex)
-      })
+      // console.log('Stage history state updated:', {
+      //   customerHistory: history,
+      //   stageCustomers,
+      //   currentStage,
+      //   totalStages: history.length,
+      //   totalPages,
+      //   paginatedHistory: history.slice(startIndex, endIndex)
+      // })
     } catch (error) {
       console.error('Error loading stage history:', error)
       showNotification(
@@ -332,8 +333,14 @@ export default function CustomerDetail() {
     try {
       const response = await fetch(`/api/products?customerId=${customerId}`)
       if (response.ok) {
-        const products = await response.json()
+        const data = await response.json()
+        // API might return an array directly or an object with a products/items field
+        const products = Array.isArray(data)
+          ? data
+          : (data.products || data.items || data.data || [])
         setCustomerProducts(products)
+      } else {
+        console.error('Failed to load products:', response.status, await response.text())
       }
     } catch (error) {
       console.error('Error loading products:', error)
@@ -549,8 +556,8 @@ export default function CustomerDetail() {
   const loadLinkedEnquiriesWithCustomerData = async (customerData) => {
     try {
       setLoadingEnquiries(true)
-      console.log('Loading enquiries for customer:', customerData)
-      console.log('Customer ID:', customerId)
+      //console.log('Loading enquiries for customer:', customerData)
+      //console.log('Customer ID:', customerId)
       
       // Request all enquiries with a high limit to get all records
       const response = await fetch(`/api/enquiries?limit=1000`)
@@ -558,7 +565,7 @@ export default function CustomerDetail() {
         const responseData = await response.json()
         // The API returns an object with enquiries array when paginated
         const allEnquiries = responseData.enquiries || responseData
-        console.log('All enquiries:', allEnquiries)
+        //console.log('All enquiries:', allEnquiries)
         
         // Filter enquiries that are linked to this customer
         const customerEnquiries = allEnquiries.filter(enquiry => {
@@ -566,21 +573,21 @@ export default function CustomerDetail() {
           const matchesName = enquiry.firstName?.toLowerCase() === customerData?.firstName?.toLowerCase() && 
                              enquiry.lastName?.toLowerCase() === customerData?.lastName?.toLowerCase()
           const matchesEmail = enquiry.email?.toLowerCase() === customerData?.email?.toLowerCase()
-          
-          console.log(`Enquiry ${enquiry.id}:`, {
-            matchesCustomerId,
-            matchesName,
-            matchesEmail,
-            enquiryCustomerId: enquiry.customerId,
-            currentCustomerId: customerId,
-            enquiryEmail: enquiry.email?.toLowerCase(),
-            customerEmail: customerData?.email?.toLowerCase()
-          })
-          
+
+          //console.log(`Enquiry ${enquiry.id}:`, {
+          //  matchesCustomerId,
+          //  matchesName,
+          //  matchesEmail,
+          //  enquiryCustomerId: enquiry.customerId,
+          //  currentCustomerId: customerId,
+          //  enquiryEmail: enquiry.email?.toLowerCase(),
+          //  customerEmail: customerData?.email?.toLowerCase()
+          //})
+
           return matchesCustomerId || matchesName || matchesEmail
         })
         
-        console.log('Filtered customer enquiries:', customerEnquiries)
+        //console.log('Filtered customer enquiries:', customerEnquiries)
         setLinkedEnquiries(customerEnquiries)
       }
     } catch (error) {
@@ -658,17 +665,18 @@ export default function CustomerDetail() {
       }
 
       // Then add a new stage history entry
+      const token = localStorage.getItem('token')
       const stageHistoryResponse = await fetch(`/api/stage-history/${customerId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           stage: newStage,
           previousStage: customer.currentStage,
           direction: direction,
-          notes: `Stage moved ${direction} via customer management`,
-          user: currentUser ? currentUser.name : 'Unknown User'
+          notes: `Stage moved ${direction} via customer management`
         })
       })
 
@@ -684,12 +692,29 @@ export default function CustomerDetail() {
         ...prev,
         currentStage: newStage
       }))
-      setStageHistory(stageHistoryData.customerHistory)
-      setCurrentStageCustomers(stageHistoryData.stageCustomers || [])
+      
+      const history = stageHistoryData.customerHistory || []
+      setStageHistory(history)
+      setCustomerCurrentStage(stageHistoryData.currentStage)
+      setTotalStages(history.length)
+      
+      // Calculate total pages
+      const totalPages = Math.ceil(history.length / stagesPerPage)
+      setStageTotalPages(totalPages)
       
       // Reset to first page when new entry is added
       setStageCurrentPage(1)
-      updateStageHistoryPagination(stageHistoryData.customerHistory)
+      
+      // Set paginated data for first page
+      const startIndex = 0
+      const endIndex = stagesPerPage
+      setPaginatedStageHistory(history.slice(startIndex, endIndex))
+
+      showNotification(
+        `Stage moved ${direction} successfully`,
+        'success',
+        'Stage Updated'
+      )
 
     } catch (error) {
       console.error('Error updating stage:', error)
@@ -845,15 +870,16 @@ export default function CustomerDetail() {
     try {
       setAddingNote(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
           note: newNote.trim(),
-          author: currentUser ? currentUser.name : 'Unknown User',
           stage: customer.currentStage
         })
       })
@@ -980,10 +1006,12 @@ export default function CustomerDetail() {
 
     try {
       setSavingFee(true)
+      const token = localStorage.getItem('token')
       const response = await fetch('/api/fees', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId,
@@ -1021,6 +1049,7 @@ export default function CustomerDetail() {
       const requestBody = {
         feeId,
         status,
+        customerId,
         paymentMethod
       }
       
@@ -1029,10 +1058,12 @@ export default function CustomerDetail() {
         requestBody.paidDate = new Date().toISOString()
       }
 
+      const token = localStorage.getItem('token')
       const response = await fetch('/api/fees', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(requestBody),
       })
@@ -1051,7 +1082,7 @@ export default function CustomerDetail() {
   }
 
   const deleteFee = async (feeId) => {
-    const fee = customerFees.find(f => f.id === feeId)
+    const fee = customerFees.find(f => f.feeId === feeId)
     
     const confirmDelete = () => {
       performDeleteFee(feeId)
@@ -1073,7 +1104,7 @@ export default function CustomerDetail() {
 
   const performDeleteFee = async (feeId) => {
     try {
-      const response = await fetch(`/api/fees?feeId=${feeId}`, {
+      const response = await fetch(`/api/fees?feeId=${feeId}&customerId=${customerId}`, {
         method: 'DELETE'
       })
 
@@ -1100,7 +1131,7 @@ export default function CustomerDetail() {
 
   const handleStatusChange = (fee, newStatus) => {
     // Add changing animation
-    setChangingFeeStatus(fee.id)
+    setChangingFeeStatus(fee.feeId)
     
     if (newStatus === 'PAID' && fee.status !== 'PAID') {
       // Show payment method selection for new PAID status
@@ -1109,7 +1140,7 @@ export default function CustomerDetail() {
       setShowPaymentMethodModal(true)
     } else {
       // Direct status update for other changes
-      updateFeeStatus(fee.id, newStatus, null)
+      updateFeeStatus(fee.feeId, newStatus, null)
     }
     
     // Remove animation after 600ms
@@ -1118,7 +1149,7 @@ export default function CustomerDetail() {
 
   const confirmPaymentMethod = () => {
     if (selectedFeeForPayment) {
-      updateFeeStatus(selectedFeeForPayment.id, 'PAID', selectedPaymentMethod)
+      updateFeeStatus(selectedFeeForPayment.feeId, 'PAID', selectedPaymentMethod)
       setShowPaymentMethodModal(false)
       setSelectedFeeForPayment(null)
       // Remove changing animation after modal closes
@@ -1137,14 +1168,16 @@ export default function CustomerDetail() {
     try {
       setSavingProduct(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
-          product: newProductData
+          ...newProductData
         })
       })
 
@@ -1167,15 +1200,17 @@ export default function CustomerDetail() {
     try {
       setSavingProduct(true)
       
+      const token = localStorage.getItem('token')
       const response = await fetch(`/api/products`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
           productIndex: index,
-          product: productFormData
+          ...productFormData
         })
       })
 
@@ -1200,7 +1235,8 @@ export default function CustomerDetail() {
     }
 
     try {
-      const response = await fetch(`/api/products?customerId=${customerId}&productIndex=${index}`, {
+      const product = customerProducts[index]
+      const response = await fetch(`/api/products?customerId=${customerId}&productIndex=${index}&productId=${product.productId}&version=${product._version}`, {
         method: 'DELETE'
       })
 
@@ -1615,6 +1651,20 @@ export default function CustomerDetail() {
 
   const scheduleFaceToFaceMeeting = () => {
     openMeetingModal('face-to-face')
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -2175,25 +2225,47 @@ export default function CustomerDetail() {
                       // View Mode
                       <div className="row small">
                         <div className="col-md-6">
-                          <div className="mb-0 small">
-                            <strong>Ref:</strong> {product.productReferenceNumber || 'N/A'} | <strong>Cat:</strong> {product.category || 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Ref:</span> 
+                            <span className="detail-value">{product.productReferenceNumber || 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>Lender:</strong> {product.lender || 'N/A'} | <strong>Type:</strong> {product.mortgageType || 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Category:</span> 
+                            <span className="detail-value">{product.category || 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>Address:</strong> {product.propertyAddress || 'N/A'} {product.propertyPostcode && `(${product.propertyPostcode})`}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Lender:</span> 
+                            <span className="detail-value">{product.lender || 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Type:</span> 
+                            <span className="detail-value">{product.mortgageType || 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Address:</span> 
+                            <span className="detail-value">{product.propertyAddress || 'N/A'} {product.propertyPostcode && `(${product.propertyPostcode})`}</span>
                           </div>
                         </div>
                         <div className="col-md-6">
-                          <div className="mb-0 small">
-                            <strong>Loan:</strong> {product.loanAmount ? formatCurrency(product.loanAmount) : 'N/A'} | <strong>Value:</strong> {product.propertyValue ? formatCurrency(product.propertyValue) : 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Loan:</span> 
+                            <span className="detail-value fw-bold text-success">{product.loanAmount ? formatCurrency(product.loanAmount) : 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>LTV:</strong> {product.ltv ? `${product.ltv}%` : 'N/A'} | <strong>ROI:</strong> {product.rateOfInterest ? `${product.rateOfInterest}%` : 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Value:</span> 
+                            <span className="detail-value fw-bold text-success">{product.propertyValue ? formatCurrency(product.propertyValue) : 'N/A'}</span>
                           </div>
-                          <div className="mb-0 small">
-                            <strong>Submitted:</strong> {product.submissionDate || 'N/A'}
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">LTV:</span> 
+                            <span className="detail-value">{product.ltv ? `${product.ltv}%` : 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">ROI:</span> 
+                            <span className="detail-value">{product.rateOfInterest ? `${product.rateOfInterest}%` : 'N/A'}</span>
+                          </div>
+                          <div className="mb-2 detail-item">
+                            <span className="detail-label">Submitted:</span> 
+                            <span className="detail-value">{product.submissionDate || 'N/A'}</span>
                           </div>
                         </div>
                       </div>
@@ -2407,20 +2479,28 @@ export default function CustomerDetail() {
               </div>
 
               <div className="d-flex gap-2">
-                <button
-                  className="btn btn-outline-secondary"
-                  onClick={() => moveToStage(stages[getCurrentStageIndex() - 1], 'backward')}
-                  disabled={!canMoveToPreviousStage()}
-                >
-                  ← {canMoveToPreviousStage() ? stageDisplayNames[stages[getCurrentStageIndex() - 1]] : 'Previous Stage'}
-                </button>
-                <button
-                  className="btn btn-outline-primary"
-                  onClick={() => moveToStage(stages[getCurrentStageIndex() + 1], 'forward')}
-                  disabled={!canMoveToNextStage()}
-                >
-                  {canMoveToNextStage() ? stageDisplayNames[stages[getCurrentStageIndex() + 1]] : 'Next Stage'} →
-                </button>
+                {canMoveToPreviousStage() && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={() => moveToStage(stages[getCurrentStageIndex() - 1], 'backward')}
+                  >
+                    ← {stageDisplayNames[stages[getCurrentStageIndex() - 1]]}
+                  </button>
+                )}
+                {canMoveToNextStage() && (
+                  <button
+                    className="btn btn-outline-primary"
+                    onClick={() => moveToStage(stages[getCurrentStageIndex() + 1], 'forward')}
+                  >
+                    {stageDisplayNames[stages[getCurrentStageIndex() + 1]]} →
+                  </button>
+                )}
+                {!canMoveToPreviousStage() && !canMoveToNextStage() && (
+                  <div className="text-muted small">
+                    <i className="bi bi-check-circle text-success me-1"></i>
+                    Journey complete
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2540,7 +2620,7 @@ export default function CustomerDetail() {
                             
                             return (
                               <tr 
-                                key={fee.id} 
+                                key={fee.feeId} 
                                 className={`fee-row-tooltip ${isOverdue ? 'fee-row-overdue' : ''}`}
                                 data-tooltip={tooltipContent}
                                 style={{ cursor: 'help' }}
@@ -2577,7 +2657,7 @@ export default function CustomerDetail() {
                                 </td>
                                 <td>
                                   <select
-                                    className={`form-select form-select-sm fee-status-dropdown fee-status-${fee.status.toLowerCase()} ${changingFeeStatus === fee.id ? 'fee-status-changing' : ''}`}
+                                    className={`form-select form-select-sm fee-status-dropdown fee-status-${fee.status.toLowerCase()} ${changingFeeStatus === fee.feeId ? 'fee-status-changing' : ''}`}
                                     value={fee.status}
                                     onChange={(e) => handleStatusChange(fee, e.target.value)}
                                   >
@@ -2592,7 +2672,7 @@ export default function CustomerDetail() {
                                 <td>
                                   <button 
                                     className="btn btn-sm btn-outline-danger fee-action-btn"
-                                    onClick={() => deleteFee(fee.id)}
+                                    onClick={() => deleteFee(fee.feeId)}
                                     title="Delete Fee"
                                   >
                                     <i className="bi bi-trash"></i>

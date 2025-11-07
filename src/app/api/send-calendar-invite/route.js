@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import { emailConfig } from '../../../config/emailConfigManager'
+export const dynamic = 'force-dynamic'
+
 
 export async function POST(request) {
   try {

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-//import { DATA_PATHS } from '../../../../config/dataConfig.js'
+export const dynamic = 'force-dynamic'
+
 
 //const enquiriesFilePath= null
 

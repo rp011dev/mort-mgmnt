@@ -1,8 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Home() {
+  const { user, loading: authLoading, logout } = useAuth()
   const [customers, setCustomers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -10,8 +12,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadCustomers()
-  }, [])
+    if (!authLoading) {
+      loadCustomers()
+    }
+  }, [authLoading])
 
   // Auto-search when user types 2 or more characters
   useEffect(() => {
@@ -159,6 +163,20 @@ export default function Home() {
   }
 
   const stats = getStageStats()
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>

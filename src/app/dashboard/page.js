@@ -1,22 +1,33 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function Dashboard() {
+  const { user, loading: authLoading, logout } = useAuth()
   const [customers, setCustomers] = useState([])
   const [enquiries, setEnquiries] = useState([])
   const [fees, setFees] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('applications')
+  const [hoveredTab, setHoveredTab] = useState(null)
+  const [showAlerts, setShowAlerts] = useState({
+    oneMonth: false,
+    threeMonths: false,
+    sixMonths: false
+  })
 
   useEffect(() => {
-    loadData()
-    
-    // Set up auto-refresh every 30 seconds for real-time updates
-    const interval = setInterval(loadData, 30000)
-    
-    return () => clearInterval(interval)
-  }, [])
+    if (!authLoading) {
+      loadData()
+      
+      // Set up auto-refresh every 30 seconds for real-time updates
+      const interval = setInterval(loadData, 30000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [authLoading])
 
   const loadAllData = async (endpoint, dataKey = null, supportsPagination = true) => {
     if (!supportsPagination) {
@@ -93,19 +104,10 @@ export default function Dashboard() {
       setProducts(productsData)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
-      setError('Failed to load dashboard data')
     } finally {
       setLoading(false)
     }
   }
-  
-  const [activeTab, setActiveTab] = useState('applications')
-  const [hoveredTab, setHoveredTab] = useState(null)
-  const [showAlerts, setShowAlerts] = useState({
-    oneMonth: false,
-    threeMonths: false,
-    sixMonths: false
-  })
 
   const getStageStats = () => {
     const stats = {}
@@ -1010,6 +1012,20 @@ export default function Dashboard() {
     )
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
    
@@ -1132,74 +1148,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
-        {/* Quick Action Cards */}
-        <div className="row">
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-search text-primary" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-primary mb-1" style={{fontSize: '1rem'}}>Search Customers</h5>
-                <p className="card-text text-muted small mb-2">
-                  Find customers by name, email, phone, or postcode
-                </p>
-                <Link href="/" className="btn btn-primary btn-sm">
-                  Go to Search
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-people text-success" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-success mb-1" style={{fontSize: '1rem'}}>Customer Management</h5>
-                <p className="card-text text-muted small mb-2">
-                  View and manage all customers in the mortgage application pipeline
-                </p>
-                <Link href="/customers" className="btn btn-success btn-sm">
-                  Manage Customers
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-envelope text-info" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-info mb-1" style={{fontSize: '1rem'}}>Enquiry Management</h5>
-                <p className="card-text text-muted small mb-2">
-                  Monitor and manage all incoming enquiries and conversions
-                </p>
-                <Link href="/enquiries" className="btn btn-info btn-sm">
-                  View Enquiries
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center py-3 px-3">
-                <div className="mb-2">
-                  <i className="bi bi-cloud-arrow-up text-warning" style={{ fontSize: '1.2rem' }}></i>
-                </div>
-                <h5 className="text-warning mb-1" style={{fontSize: '1rem'}}>OneDrive Sync</h5>
-                <p className="card-text text-muted small mb-2">
-                  Sync customer documents and files with OneDrive
-                </p>
-                <Link href="/dashboard/onedrive" className="btn btn-warning btn-sm">
-                  Sync Files
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+      
       </div>
     </div>
   )

@@ -36,7 +36,8 @@ export default function NewEnquiry() {
     jointDateOfBirth: '',
     jointPostcode: '',
     jointEmploymentStatus: 'employed',
-    jointAddress: ''
+    jointAddress: '',
+    jointAnnualIncome: '0'
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
@@ -204,9 +205,9 @@ export default function NewEnquiry() {
       </div>
 
       <div className="row">
-        <div className="col-lg-8 mx-auto">
+        <div className="col-lg-10 col-xl-8 mx-auto">
           <div className="card">
-            <div className="card-body">
+            <div className="card-body py-3">
               {/* Success Message */}
               {successMessage && (
                 <div className="alert alert-success alert-dismissible fade show" role="alert">
@@ -235,13 +236,13 @@ export default function NewEnquiry() {
 
               <form onSubmit={handleSubmit}>
                 {/* Personal Information */}
-                <h5 className="card-title mb-4">Personal Information</h5>
-                <div className="row mb-3">
+                <h6 className="card-title mb-3 fw-bold">Personal Information</h6>
+                <div className="row mb-2">
                   <div className="col-md-6">
-                    <label className="form-label">First Name *</label>
+                    <label className="form-label small mb-1">First Name *</label>
                     <input
                       type="text"
-                      className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
+                      className={`form-control form-control-sm ${errors.firstName ? 'is-invalid' : ''}`}
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
@@ -250,10 +251,10 @@ export default function NewEnquiry() {
                     {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Last Name *</label>
+                    <label className="form-label small mb-1">Last Name *</label>
                     <input
                       type="text"
-                      className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
+                      className={`form-control form-control-sm ${errors.lastName ? 'is-invalid' : ''}`}
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
@@ -263,12 +264,12 @@ export default function NewEnquiry() {
                   </div>
                 </div>
 
-                <div className="row mb-3">
+                <div className="row mb-2">
                   <div className="col-md-6">
-                    <label className="form-label">Email *</label>
+                    <label className="form-label small mb-1">Email *</label>
                     <input
                       type="email"
-                      className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                      className={`form-control form-control-sm ${errors.email ? 'is-invalid' : ''}`}
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
@@ -277,10 +278,10 @@ export default function NewEnquiry() {
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Phone *</label>
+                    <label className="form-label small mb-1">Phone *</label>
                     <input
                       type="tel"
-                      className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
+                      className={`form-control form-control-sm ${errors.phone ? 'is-invalid' : ''}`}
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
@@ -291,21 +292,21 @@ export default function NewEnquiry() {
                   </div>
                 </div>
 
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label">Date of Birth</label>
+                <div className="row mb-2">
+                  <div className="col-md-4">
+                    <label className="form-label small mb-1">Date of Birth</label>
                     <input
                       type="date"
-                      className="form-control"
+                      className="form-control form-control-sm"
                       name="dateOfBirth"
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
                     />
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Account Type</label>
+                  <div className="col-md-4">
+                    <label className="form-label small mb-1">Account Type</label>
                     <select
-                      className="form-select"
+                      className="form-select form-select-sm"
                       name="customerAccountType"
                       value={formData.customerAccountType}
                       onChange={handleInputChange}
@@ -314,14 +315,11 @@ export default function NewEnquiry() {
                       <option value="Joint">Joint</option>
                     </select>
                   </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label">Postcode *</label>
+                  <div className="col-md-4">
+                    <label className="form-label small mb-1">Postcode *</label>
                     <input
                       type="text"
-                      className={`form-control ${errors.postcode ? 'is-invalid' : ''}`}
+                      className={`form-control form-control-sm ${errors.postcode ? 'is-invalid' : ''}`}
                       name="postcode"
                       value={formData.postcode}
                       onChange={handleInputChange}
@@ -329,10 +327,13 @@ export default function NewEnquiry() {
                     />
                     {errors.postcode && <div className="invalid-feedback">{errors.postcode}</div>}
                   </div>
+                </div>
+
+                <div className="row mb-2">
                   <div className="col-md-6">
-                    <label className="form-label">Employment Status</label>
+                    <label className="form-label small mb-1">Employment Status</label>
                     <select
-                      className="form-select"
+                      className="form-select form-select-sm"
                       name="employmentStatus"
                       value={formData.employmentStatus}
                       onChange={handleInputChange}
@@ -343,12 +344,25 @@ export default function NewEnquiry() {
                       <option value="unemployed">Unemployed</option>
                     </select>
                   </div>
+                  <div className="col-md-6">
+                    <label className="form-label small mb-1">Annual Income</label>
+                    <input
+                      type="number"
+                      className={`form-control form-control-sm ${errors.annualIncome ? 'is-invalid' : ''}`}
+                      name="annualIncome"
+                      value={formData.annualIncome}
+                      onChange={handleInputChange}
+                      min="0"
+                      placeholder="Enter annual income (optional)"
+                    />
+                    {errors.annualIncome && <div className="invalid-feedback">{errors.annualIncome}</div>}
+                  </div>
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Address *</label>
+                  <label className="form-label small mb-1">Address *</label>
                   <textarea
-                    className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                    className={`form-control form-control-sm ${errors.address ? 'is-invalid' : ''}`}
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
@@ -358,30 +372,16 @@ export default function NewEnquiry() {
                   {errors.address && <div className="invalid-feedback">{errors.address}</div>}
                 </div>
 
-                <div className="mb-4">
-                  <label className="form-label">Annual Income</label>
-                  <input
-                    type="number"
-                    className={`form-control ${errors.annualIncome ? 'is-invalid' : ''}`}
-                    name="annualIncome"
-                    value={formData.annualIncome}
-                    onChange={handleInputChange}
-                    min="0"
-                    placeholder="Enter annual income (optional)"
-                  />
-                  {errors.annualIncome && <div className="invalid-feedback">{errors.annualIncome}</div>}
-                </div>
-
                 {/* Joint Account Holder Information */}
                 {formData.customerAccountType === 'Joint' && (
                   <>
-                    <h5 className="card-title mb-4 mt-5">Joint Account Holder Information</h5>
-                    <div className="row mb-3">
+                    <h6 className="card-title mb-3 mt-4 fw-bold">Joint Account Holder Information</h6>
+                    <div className="row mb-2">
                       <div className="col-md-6">
-                        <label className="form-label">First Name *</label>
+                        <label className="form-label small mb-1">First Name *</label>
                         <input
                           type="text"
-                          className={`form-control ${errors.jointFirstName ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.jointFirstName ? 'is-invalid' : ''}`}
                           name="jointFirstName"
                           value={formData.jointFirstName}
                           onChange={handleInputChange}
@@ -390,10 +390,10 @@ export default function NewEnquiry() {
                         {errors.jointFirstName && <div className="invalid-feedback">{errors.jointFirstName}</div>}
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Last Name *</label>
+                        <label className="form-label small mb-1">Last Name *</label>
                         <input
                           type="text"
-                          className={`form-control ${errors.jointLastName ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.jointLastName ? 'is-invalid' : ''}`}
                           name="jointLastName"
                           value={formData.jointLastName}
                           onChange={handleInputChange}
@@ -403,12 +403,12 @@ export default function NewEnquiry() {
                       </div>
                     </div>
 
-                    <div className="row mb-3">
+                    <div className="row mb-2">
                       <div className="col-md-6">
-                        <label className="form-label">Email *</label>
+                        <label className="form-label small mb-1">Email *</label>
                         <input
                           type="email"
-                          className={`form-control ${errors.jointEmail ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.jointEmail ? 'is-invalid' : ''}`}
                           name="jointEmail"
                           value={formData.jointEmail}
                           onChange={handleInputChange}
@@ -417,10 +417,10 @@ export default function NewEnquiry() {
                         {errors.jointEmail && <div className="invalid-feedback">{errors.jointEmail}</div>}
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Phone *</label>
+                        <label className="form-label small mb-1">Phone *</label>
                         <input
                           type="tel"
-                          className={`form-control ${errors.jointPhone ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.jointPhone ? 'is-invalid' : ''}`}
                           name="jointPhone"
                           value={formData.jointPhone}
                           onChange={handleInputChange}
@@ -431,21 +431,21 @@ export default function NewEnquiry() {
                       </div>
                     </div>
 
-                    <div className="row mb-3">
-                      <div className="col-md-6">
-                        <label className="form-label">Date of Birth</label>
+                    <div className="row mb-2">
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Date of Birth</label>
                         <input
                           type="date"
-                          className="form-control"
+                          className="form-control form-control-sm"
                           name="jointDateOfBirth"
                           value={formData.jointDateOfBirth}
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="col-md-6">
-                        <label className="form-label">Employment Status</label>
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Employment Status</label>
                         <select
-                          className="form-select"
+                          className="form-select form-select-sm"
                           name="jointEmploymentStatus"
                           value={formData.jointEmploymentStatus}
                           onChange={handleInputChange}
@@ -456,14 +456,11 @@ export default function NewEnquiry() {
                           <option value="unemployed">Unemployed</option>
                         </select>
                       </div>
-                    </div>
-
-                    <div className="row mb-3">
-                      <div className="col-md-6">
-                        <label className="form-label">Postcode *</label>
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Postcode *</label>
                         <input
                           type="text"
-                          className={`form-control ${errors.jointPostcode ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.jointPostcode ? 'is-invalid' : ''}`}
                           name="jointPostcode"
                           value={formData.jointPostcode}
                           onChange={handleInputChange}
@@ -473,40 +470,57 @@ export default function NewEnquiry() {
                       </div>
                     </div>
 
-                    <div className="mb-4">
-                      <label className="form-label">Address *</label>
-                      <textarea
-                        className={`form-control ${errors.jointAddress ? 'is-invalid' : ''}`}
-                        name="jointAddress"
-                        value={formData.jointAddress}
-                        onChange={handleInputChange}
-                        rows="2"
-                        required
-                      />
-                      {errors.jointAddress && <div className="invalid-feedback">{errors.jointAddress}</div>}
+                    <div className="row mb-2">
+                      <div className="col-md-8">
+                        <label className="form-label small mb-1">Address *</label>
+                        <textarea
+                          className={`form-control form-control-sm ${errors.jointAddress ? 'is-invalid' : ''}`}
+                          name="jointAddress"
+                          value={formData.jointAddress}
+                          onChange={handleInputChange}
+                          rows="2"
+                          required
+                        />
+                        {errors.jointAddress && <div className="invalid-feedback">{errors.jointAddress}</div>}
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Annual Income</label>
+                        <input
+                          type="number"
+                          className={`form-control form-control-sm ${errors.jointAnnualIncome ? 'is-invalid' : ''}`}
+                          name="jointAnnualIncome"
+                          value={formData.jointAnnualIncome}
+                          onChange={handleInputChange}
+                          min="0"
+                          placeholder="Enter annual income"
+                        />
+                        {errors.jointAnnualIncome && <div className="invalid-feedback">{errors.jointAnnualIncome}</div>}
+                      </div>
                     </div>
                   </>
                 )}
 
                 {/* Enquiry Details */}
-                <h5 className="card-title mb-4">Enquiry Details</h5>
-                <div className="row mb-3">
+                <h6 className="card-title mb-3 mt-4 fw-bold">Enquiry Details</h6>
+                <div className="row mb-2">
                   <div className="col-md-6">
-                    <label className="form-label">Enquiry Type</label>
+                    <label className="form-label small mb-1">Enquiry Type</label>
                     <select
-                      className="form-select"
+                      className="form-select form-select-sm"
                       name="enquiryType"
                       value={formData.enquiryType}
                       onChange={handleInputChange}
                     >
                       <option value="Mortgage">Mortgage</option>
+                      <option value="Remortgage">Remortgage</option>
                       <option value="Protection">Protection</option>
+                      <option value="Insurance">Insurance</option>
                     </select>
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Preferred Lender</label>
+                    <label className="form-label small mb-1">Preferred Lender</label>
                     <select
-                      className="form-select"
+                      className="form-select form-select-sm"
                       name="preferredLender"
                       value={formData.preferredLender}
                       onChange={handleInputChange}
@@ -521,12 +535,12 @@ export default function NewEnquiry() {
 
                 {formData.enquiryType === 'Mortgage' && (
                   <>
-                    <div className="row mb-3">
-                      <div className="col-md-6">
-                        <label className="form-label">Loan Amount</label>
+                    <div className="row mb-2">
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Loan Amount</label>
                         <input
                           type="number"
-                          className={`form-control ${errors.loanAmount ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.loanAmount ? 'is-invalid' : ''}`}
                           name="loanAmount"
                           value={formData.loanAmount}
                           onChange={handleInputChange}
@@ -535,11 +549,11 @@ export default function NewEnquiry() {
                         />
                         {errors.loanAmount && <div className="invalid-feedback">{errors.loanAmount}</div>}
                       </div>
-                      <div className="col-md-6">
-                        <label className="form-label">Property Value</label>
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Property Value</label>
                         <input
                           type="number"
-                          className={`form-control ${errors.propertyValue ? 'is-invalid' : ''}`}
+                          className={`form-control form-control-sm ${errors.propertyValue ? 'is-invalid' : ''}`}
                           name="propertyValue"
                           value={formData.propertyValue}
                           onChange={handleInputChange}
@@ -548,48 +562,47 @@ export default function NewEnquiry() {
                         />
                         {errors.propertyValue && <div className="invalid-feedback">{errors.propertyValue}</div>}
                       </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label">Mortgage Type</label>
-                      <select
-                        className="form-select"
-                        name="mortgageType"
-                        value={formData.mortgageType}
-                        onChange={handleInputChange}
-                      >
-                        <option value="">Select Mortgage Type</option>
-                        <option value="LTD Company BTL">LTD Company BTL</option>
-                        <option value="BTL">BTL</option>
-                        <option value="First Time Buyer">First Time Buyer</option>
-                        <option value="Home Mover">Home Mover</option>
-                        <option value="Remortgage">Remortgage</option>
-                        <option value="Product Transfer">Product Transfer</option>
-                        <option value="Further Advance">Further Advance</option>
-                      </select>
+                      <div className="col-md-4">
+                        <label className="form-label small mb-1">Mortgage Type</label>
+                        <select
+                          className="form-select form-select-sm"
+                          name="mortgageType"
+                          value={formData.mortgageType}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select Type</option>
+                          <option value="LTD Company BTL">LTD Company BTL</option>
+                          <option value="BTL">BTL</option>
+                          <option value="First Time Buyer">First Time Buyer</option>
+                          <option value="Home Mover">Home Mover</option>
+                          <option value="Remortgage">Remortgage</option>
+                          <option value="Product Transfer">Product Transfer</option>
+                          <option value="Further Advance">Further Advance</option>
+                        </select>
+                      </div>
                     </div>
                   </>
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label">Notes</label>
+                  <label className="form-label small mb-1">Notes</label>
                   <textarea
-                    className="form-control"
+                    className="form-control form-control-sm"
                     name="notes"
                     value={formData.notes}
                     onChange={handleInputChange}
-                    rows="3"
+                    rows="2"
                     placeholder="Additional notes about the enquiry..."
                   />
                 </div>
 
                 {/* Management Details */}
-                <h5 className="card-title mb-4">Management Details</h5>
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label">Status</label>
+                <h6 className="card-title mb-3 mt-4 fw-bold">Management Details</h6>
+                <div className="row mb-2">
+                  <div className="col-md-4">
+                    <label className="form-label small mb-1">Status</label>
                     <select
-                      className="form-select"
+                      className="form-select form-select-sm"
                       name="status"
                       value={formData.status}
                       onChange={handleInputChange}
@@ -601,10 +614,10 @@ export default function NewEnquiry() {
                       <option value="follow-up">Follow Up</option>
                     </select>
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Assign To</label>
+                  <div className="col-md-4">
+                    <label className="form-label small mb-1">Assign To</label>
                     <select
-                      className="form-select"
+                      className="form-select form-select-sm"
                       name="assignedTo"
                       value={formData.assignedTo}
                       onChange={handleInputChange}
@@ -617,28 +630,27 @@ export default function NewEnquiry() {
                       ))}
                     </select>
                   </div>
+                  <div className="col-md-4">
+                    <label className="form-label small mb-1">Follow Up Date</label>
+                    <input
+                      type="date"
+                      className="form-control form-control-sm"
+                      name="followUpDate"
+                      value={formData.followUpDate}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="form-label">Follow Up Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    name="followUpDate"
-                    value={formData.followUpDate}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="d-flex gap-2">
+                <div className="d-flex gap-2 mt-4">
                   <button
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-sm"
                     disabled={loading}
                   >
                     {loading ? 'Creating...' : 'Create Enquiry'}
                   </button>
-                  <Link href="/enquiries" className="btn btn-outline-secondary">
+                  <Link href="/enquiries" className="btn btn-outline-secondary btn-sm">
                     Cancel
                   </Link>
                 </div>

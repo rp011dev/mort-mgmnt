@@ -191,6 +191,7 @@ export async function POST(request) {
       jointPostcode: enquiryData.jointPostcode || '',
       jointEmploymentStatus: enquiryData.jointEmploymentStatus || 'employed',
       jointAddress: enquiryData.jointAddress || '',
+      jointAnnualIncome: enquiryData.jointAnnualIncome || 0,
       ...auditFields,
       _version: 1
     };

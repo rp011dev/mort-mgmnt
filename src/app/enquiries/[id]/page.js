@@ -59,7 +59,8 @@ export default function EnquiryDetails({ params }) {
           dateOfBirth: enquiry.jointDateOfBirth || '',
           postcode: enquiry.jointPostcode || '',
           employmentStatus: enquiry.jointEmploymentStatus || 'employed',
-          address: enquiry.jointAddress || ''
+          address: enquiry.jointAddress || '',
+          annualIncome: enquiry.jointAnnualIncome || '0'
         });
       }
 
@@ -354,7 +355,8 @@ export default function EnquiryDetails({ params }) {
       jointDateOfBirth: enquiry.jointDateOfBirth || '',
       jointPostcode: enquiry.jointPostcode || '',
       jointEmploymentStatus: enquiry.jointEmploymentStatus || 'employed',
-      jointAddress: enquiry.jointAddress || ''
+      jointAddress: enquiry.jointAddress || '',
+      jointAnnualIncome: enquiry.jointAnnualIncome || '0'
     })
     setIsEditing(true)
   }
@@ -389,7 +391,8 @@ export default function EnquiryDetails({ params }) {
         jointDateOfBirth: editFormData.customerAccountType === 'Joint' ? editFormData.jointDateOfBirth : '',
         jointPostcode: editFormData.customerAccountType === 'Joint' ? editFormData.jointPostcode : '',
         jointEmploymentStatus: editFormData.customerAccountType === 'Joint' ? editFormData.jointEmploymentStatus : '',
-        jointAddress: editFormData.customerAccountType === 'Joint' ? editFormData.jointAddress : ''
+        jointAddress: editFormData.customerAccountType === 'Joint' ? editFormData.jointAddress : '',
+        jointAnnualIncome: editFormData.customerAccountType === 'Joint' ? parseInt(editFormData.jointAnnualIncome) || 0 : 0
       }
 
       // Clean up mortgage-specific fields for Protection enquiries
@@ -791,6 +794,18 @@ export default function EnquiryDetails({ params }) {
                         </span>
                       </span>
                     </div>
+                    {enquiry.employmentStatus && (
+                      <div className="mb-2 detail-item">
+                        <span className="detail-label">Employment Status:</span> 
+                        <span className="detail-value">{enquiry.employmentStatus}</span>
+                      </div>
+                    )}
+                    {(enquiry.annualIncome !== undefined && enquiry.annualIncome !== null) && (
+                      <div className="mb-2 detail-item">
+                        <span className="detail-label">Annual Income:</span> 
+                        <span className="detail-value fw-semibold">£{Number(enquiry.annualIncome).toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="mb-2 detail-item">
                       <span className="detail-label">Address:</span> 
                       <span className="detail-value">{enquiry.address}</span>
@@ -887,6 +902,12 @@ export default function EnquiryDetails({ params }) {
                             <div className="mb-2 detail-item">
                               <span className="detail-label">Employment Status:</span> 
                               <span className="detail-value">{enquiry.jointEmploymentStatus}</span>
+                            </div>
+                          )}
+                          {(enquiry.jointAnnualIncome !== undefined && enquiry.jointAnnualIncome !== null) && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Annual Income:</span> 
+                              <span className="detail-value fw-semibold">£{Number(enquiry.jointAnnualIncome).toLocaleString()}</span>
                             </div>
                           )}
                           {enquiry.jointAddress && (
@@ -1094,6 +1115,16 @@ export default function EnquiryDetails({ params }) {
                             onChange={(e) => handleEditFormChange('jointPostcode', e.target.value)}
                           />
                         </div>
+                        <div className="col-md-6">
+                          <label className="form-label small">Annual Income</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointAnnualIncome}
+                            onChange={(e) => handleEditFormChange('jointAnnualIncome', e.target.value)}
+                            min="0"
+                          />
+                        </div>
                       </div>
                       <div className="mb-2">
                         <label className="form-label small">Address</label>
@@ -1234,67 +1265,6 @@ export default function EnquiryDetails({ params }) {
             </div>
           </div>
 
-          {/* Financial Details */}
-          {(enquiry.loanAmount || enquiry.propertyValue || enquiry.annualIncome) && (
-            <div className="card mb-2">
-              <div className="card-header py-1">
-                <h6 className="mb-0" style={{fontSize: '0.85rem'}}>Financial Information</h6>
-              </div>
-              <div className="card-body py-2 px-3">
-                <div className="row">
-                  <div className="col-md-4">
-                    {enquiry.loanAmount && (
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Loan Amount:</span> 
-                        <span className="detail-value fw-bold text-success">{formatCurrency(enquiry.loanAmount)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="col-md-4">
-                    {enquiry.propertyValue && (
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Property Value:</span> 
-                        <span className="detail-value fw-bold text-info">{formatCurrency(enquiry.propertyValue)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="col-md-4">
-                    {enquiry.annualIncome && (
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Annual Income:</span> 
-                        <span className="detail-value fw-bold text-primary">{formatCurrency(enquiry.annualIncome)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {enquiry.loanAmount && enquiry.propertyValue && (
-                  <div className="row">
-                    <div className="col-md-4">
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">LTV:</span> 
-                        <span className="detail-value">
-                          <span className={`badge ${((enquiry.loanAmount / enquiry.propertyValue) * 100) > 80 ? 'bg-warning' : 'bg-success'}`}>
-                            {((enquiry.loanAmount / enquiry.propertyValue) * 100).toFixed(1)}%
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {enquiry.employmentStatus && (
-                  <div className="row">
-                    <div className="col-md-6">
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Employment Status:</span> 
-                        <span className="detail-value">{enquiry.employmentStatus}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Mortgage Details */}
           {(enquiry.mortgageType || enquiry.preferredLender) && (
             <div className="card mb-2">
@@ -1335,10 +1305,10 @@ export default function EnquiryDetails({ params }) {
                   <label className="form-label small">Author</label>
                   <div className="form-control-plaintext bg-light p-2 rounded small" style={{fontSize: '0.75rem'}}>
                     <i className="bi bi-person-circle me-2"></i>
-                    <strong>{currentUser ? currentUser.name : 'Loading...'}</strong>
-                    {currentUser && (
+                    <strong>{user ? user.name : 'Loading...'}</strong>
+                    {user && (
                       <div className="text-muted small">
-                        {currentUser.role} - {currentUser.department}
+                        {user.role || 'User'}{user.department ? ` - ${user.department}` : ''}
                       </div>
                     )}
                   </div>
@@ -1713,7 +1683,7 @@ export default function EnquiryDetails({ params }) {
                             </div>
                           </div>
                           <div className="row">
-                            <div className="col-md-8 mb-3">
+                            <div className="col-md-6 mb-3">
                               <label className="form-label">Address</label>
                               <input
                                 type="text"
@@ -1726,7 +1696,7 @@ export default function EnquiryDetails({ params }) {
                                 }}
                               />
                             </div>
-                            <div className="col-md-4 mb-3">
+                            <div className="col-md-3 mb-3">
                               <label className="form-label">Postcode</label>
                               <input
                                 type="text"
@@ -1737,6 +1707,21 @@ export default function EnquiryDetails({ params }) {
                                   updatedHolders[index].postcode = e.target.value;
                                   handleFormChange('jointHolders', updatedHolders);
                                 }}
+                              />
+                            </div>
+                            <div className="col-md-3 mb-3">
+                              <label className="form-label">Annual Income</label>
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={holder.annualIncome || '0'}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].annualIncome = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                                min="0"
+                                placeholder="Annual income"
                               />
                             </div>
                           </div>

@@ -27,7 +27,16 @@ export default function NewEnquiry() {
     notes: '',
     status: 'new',
     assignedTo: '',
-    followUpDate: ''
+    followUpDate: '',
+    // Joint account holder fields
+    jointFirstName: '',
+    jointLastName: '',
+    jointEmail: '',
+    jointPhone: '',
+    jointDateOfBirth: '',
+    jointPostcode: '',
+    jointEmploymentStatus: 'employed',
+    jointAddress: ''
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
@@ -82,6 +91,26 @@ export default function NewEnquiry() {
     // Phone validation (UK format)
     if (formData.phone && !/^(\+44|0)[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ''))) {
       newErrors.phone = 'Please enter a valid UK phone number'
+    }
+    
+    // Joint account holder validation
+    if (formData.customerAccountType === 'Joint') {
+      if (!formData.jointFirstName.trim()) newErrors.jointFirstName = 'Joint account holder first name is required'
+      if (!formData.jointLastName.trim()) newErrors.jointLastName = 'Joint account holder last name is required'
+      if (!formData.jointEmail.trim()) newErrors.jointEmail = 'Joint account holder email is required'
+      if (!formData.jointPhone.trim()) newErrors.jointPhone = 'Joint account holder phone is required'
+      if (!formData.jointPostcode.trim()) newErrors.jointPostcode = 'Joint account holder postcode is required'
+      if (!formData.jointAddress.trim()) newErrors.jointAddress = 'Joint account holder address is required'
+      
+      // Joint email validation
+      if (formData.jointEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.jointEmail)) {
+        newErrors.jointEmail = 'Please enter a valid email address'
+      }
+      
+      // Joint phone validation (UK format)
+      if (formData.jointPhone && !/^(\+44|0)[0-9]{10,11}$/.test(formData.jointPhone.replace(/\s/g, ''))) {
+        newErrors.jointPhone = 'Please enter a valid UK phone number'
+      }
     }
     
     if (formData.enquiryType === 'Mortgage') {
@@ -342,6 +371,122 @@ export default function NewEnquiry() {
                   />
                   {errors.annualIncome && <div className="invalid-feedback">{errors.annualIncome}</div>}
                 </div>
+
+                {/* Joint Account Holder Information */}
+                {formData.customerAccountType === 'Joint' && (
+                  <>
+                    <h5 className="card-title mb-4 mt-5">Joint Account Holder Information</h5>
+                    <div className="row mb-3">
+                      <div className="col-md-6">
+                        <label className="form-label">First Name *</label>
+                        <input
+                          type="text"
+                          className={`form-control ${errors.jointFirstName ? 'is-invalid' : ''}`}
+                          name="jointFirstName"
+                          value={formData.jointFirstName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        {errors.jointFirstName && <div className="invalid-feedback">{errors.jointFirstName}</div>}
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Last Name *</label>
+                        <input
+                          type="text"
+                          className={`form-control ${errors.jointLastName ? 'is-invalid' : ''}`}
+                          name="jointLastName"
+                          value={formData.jointLastName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        {errors.jointLastName && <div className="invalid-feedback">{errors.jointLastName}</div>}
+                      </div>
+                    </div>
+
+                    <div className="row mb-3">
+                      <div className="col-md-6">
+                        <label className="form-label">Email *</label>
+                        <input
+                          type="email"
+                          className={`form-control ${errors.jointEmail ? 'is-invalid' : ''}`}
+                          name="jointEmail"
+                          value={formData.jointEmail}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        {errors.jointEmail && <div className="invalid-feedback">{errors.jointEmail}</div>}
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Phone *</label>
+                        <input
+                          type="tel"
+                          className={`form-control ${errors.jointPhone ? 'is-invalid' : ''}`}
+                          name="jointPhone"
+                          value={formData.jointPhone}
+                          onChange={handleInputChange}
+                          placeholder="07XXXXXXXXX"
+                          required
+                        />
+                        {errors.jointPhone && <div className="invalid-feedback">{errors.jointPhone}</div>}
+                      </div>
+                    </div>
+
+                    <div className="row mb-3">
+                      <div className="col-md-6">
+                        <label className="form-label">Date of Birth</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="jointDateOfBirth"
+                          value={formData.jointDateOfBirth}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Employment Status</label>
+                        <select
+                          className="form-select"
+                          name="jointEmploymentStatus"
+                          value={formData.jointEmploymentStatus}
+                          onChange={handleInputChange}
+                        >
+                          <option value="employed">Employed</option>
+                          <option value="self-employed">Self Employed</option>
+                          <option value="retired">Retired</option>
+                          <option value="unemployed">Unemployed</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="row mb-3">
+                      <div className="col-md-6">
+                        <label className="form-label">Postcode *</label>
+                        <input
+                          type="text"
+                          className={`form-control ${errors.jointPostcode ? 'is-invalid' : ''}`}
+                          name="jointPostcode"
+                          value={formData.jointPostcode}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        {errors.jointPostcode && <div className="invalid-feedback">{errors.jointPostcode}</div>}
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="form-label">Address *</label>
+                      <textarea
+                        className={`form-control ${errors.jointAddress ? 'is-invalid' : ''}`}
+                        name="jointAddress"
+                        value={formData.jointAddress}
+                        onChange={handleInputChange}
+                        rows="2"
+                        required
+                      />
+                      {errors.jointAddress && <div className="invalid-feedback">{errors.jointAddress}</div>}
+                    </div>
+                  </>
+                )}
 
                 {/* Enquiry Details */}
                 <h5 className="card-title mb-4">Enquiry Details</h5>

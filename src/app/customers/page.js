@@ -312,7 +312,7 @@ function CustomersContent() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Start typing (2+ letters) to search by name, email, phone, or postcode..."
+                placeholder="Start typing (2+ letters) to search by name, email, phone, postcode (includes joint holders)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {

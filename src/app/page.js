@@ -22,13 +22,26 @@ export default function Home() {
     if (searchTerm.trim().length >= 2) {
       // Auto search with 2+ characters
       setIsSearching(true)
-      const results = customers.filter(customer => 
-        (customer.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (customer.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (customer.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        ((customer.phone || '').toString().toLowerCase()).includes(searchTerm.toLowerCase()) ||
-        (customer.postcode?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-      )
+      const results = customers.filter(customer => {
+        const searchLower = searchTerm.toLowerCase()
+        // Search in main customer fields
+        const mainMatch = (customer.lastName?.toLowerCase() || '').includes(searchLower) ||
+          (customer.firstName?.toLowerCase() || '').includes(searchLower) ||
+          (customer.email?.toLowerCase() || '').includes(searchLower) ||
+          ((customer.phone || '').toString().toLowerCase()).includes(searchLower) ||
+          (customer.postcode?.toLowerCase() || '').includes(searchLower)
+        
+        // Search in joint holders
+        const jointHolderMatch = customer.jointHolders?.some(holder => 
+          (holder.firstName?.toLowerCase() || '').includes(searchLower) ||
+          (holder.lastName?.toLowerCase() || '').includes(searchLower) ||
+          (holder.email?.toLowerCase() || '').includes(searchLower) ||
+          ((holder.phone || '').toString().toLowerCase()).includes(searchLower) ||
+          (holder.postcode?.toLowerCase() || '').includes(searchLower)
+        )
+        
+        return mainMatch || jointHolderMatch
+      })
       setSearchResults(results)
     } else if (searchTerm.trim().length === 0) {
       // Clear search when empty
@@ -112,13 +125,26 @@ export default function Home() {
     if (searchTerm.trim().length >= 2) {
       // Force trigger search in case it hasn't happened yet
       setIsSearching(true)
-      const results = customers.filter(customer => 
-        (customer.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (customer.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (customer.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        ((customer.phone || '').toString().toLowerCase()).includes(searchTerm.toLowerCase()) ||
-        (customer.postcode?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-      )
+      const results = customers.filter(customer => {
+        const searchLower = searchTerm.toLowerCase()
+        // Search in main customer fields
+        const mainMatch = (customer.lastName?.toLowerCase() || '').includes(searchLower) ||
+          (customer.firstName?.toLowerCase() || '').includes(searchLower) ||
+          (customer.email?.toLowerCase() || '').includes(searchLower) ||
+          ((customer.phone || '').toString().toLowerCase()).includes(searchLower) ||
+          (customer.postcode?.toLowerCase() || '').includes(searchLower)
+        
+        // Search in joint holders
+        const jointHolderMatch = customer.jointHolders?.some(holder => 
+          (holder.firstName?.toLowerCase() || '').includes(searchLower) ||
+          (holder.lastName?.toLowerCase() || '').includes(searchLower) ||
+          (holder.email?.toLowerCase() || '').includes(searchLower) ||
+          ((holder.phone || '').toString().toLowerCase()).includes(searchLower) ||
+          (holder.postcode?.toLowerCase() || '').includes(searchLower)
+        )
+        
+        return mainMatch || jointHolderMatch
+      })
       setSearchResults(results)
     }
   }
@@ -235,7 +261,7 @@ export default function Home() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Start typing (2+ letters) to search by name, postcode, phone, or email..."
+                  placeholder="Start typing (2+ letters) to search by name, postcode, phone, email (includes joint holders)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />

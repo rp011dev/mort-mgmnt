@@ -166,6 +166,30 @@ export default function Home() {
     return stages[stage] || stage
   }
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP'
+    }).format(amount)
+  }
+
+  const getStageProgress = (stage) => {
+    const progress = {
+      'initial-enquiry-assessment': 9,
+      'document-verification': 18,
+      'decision-in-principle': 27,
+      'application-submitted-lender': 36,
+      'case-submitted-network': 45,
+      'offer-generated': 54,
+      'solicitor-initial-quote-issued': 63,
+      'solicitor-quote-accepted-fee-paid': 72,
+      'solicitor-initial-search-legal-enquiries': 81,
+      'solicitor-contracts-prepared': 90,
+      'exchange-completion': 100
+    }
+    return progress[stage] || 0
+  }
+
   const getStageStats = () => {
     const stats = {
       total: customers.length,
@@ -294,27 +318,74 @@ export default function Home() {
                 <div className="row">
                   {searchResults.map(customer => (
                     <div key={customer.id} className="col-md-6 col-lg-4 mb-2">
-                      <div className="card customer-card h-100">
-                        <div className="card-body py-2 px-3">
-                          <h6 className="card-title mb-1" style={{fontSize: '0.9rem'}}>
+                      <div className="card customer-card h-100 d-flex flex-column">
+                        <div className="card-header d-flex justify-content-between align-items-center py-2">
+                          <h6 className="mb-0" style={{fontSize: '0.9rem'}}>
                             {customer.firstName} {customer.lastName}
                           </h6>
-                          <p className="card-text text-muted small mb-1">
-                            {customer.email}
-                          </p>
-                          <p className="card-text text-muted small mb-1">
-                            {customer.phone}
-                          </p>
-                          <p className="card-text text-muted small mb-2">
-                            {customer.postcode}
-                          </p>
-                          <span className={`badge stage-badge stage-${customer.currentStage} mb-2`} style={{fontSize: '0.7rem'}}>
-                            {getStageDisplay(customer.currentStage)}
-                          </span>
-                          <div className="d-grid">
+                          <small className="text-muted">{customer.id}</small>
+                        </div>
+                        <div className="card-body py-2 px-3 flex-grow-1 d-flex flex-column">
+                          <div className="flex-grow-1">
+                            <div className="row mb-2">
+                              <div className="col-6">
+                                <small className="text-muted">Email:</small>
+                                <div className="small">{customer.email}</div>
+                              </div>
+                              <div className="col-6">
+                                <small className="text-muted">Phone:</small>
+                                <div className="small">{customer.phone}</div>
+                              </div>
+                            </div>
+
+                            <div className="row mb-2">
+                              <div className="col-6">
+                                <small className="text-muted">Postcode:</small>
+                                <div className="small">{customer.postcode}</div>
+                              </div>
+                              <div className="col-6">
+                                <small className="text-muted">Loan Amount:</small>
+                                <div className="small">{formatCurrency(customer.loanAmount)}</div>
+                              </div>
+                            </div>
+
+                            <div className="mb-2">
+                              <small className="text-muted">Current Stage:</small>
+                              <div>
+                                <span className={`badge stage-badge stage-${customer.currentStage}`} style={{fontSize: '0.7rem'}}>
+                                  {getStageDisplay(customer.currentStage)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mb-2">
+                              <small className="text-muted">Progress:</small>
+                              <div className="progress mt-1" style={{height: '6px'}}>
+                                <div 
+                                  className="progress-bar" 
+                                  role="progressbar" 
+                                  style={{width: `${getStageProgress(customer.currentStage)}%`}}
+                                ></div>
+                              </div>
+                              <small className="text-muted small">{getStageProgress(customer.currentStage)}% Complete</small>
+                            </div>
+
+                            {customer.customerAccountType === 'Joint' && customer.jointHolders?.length > 0 && (
+                              <div className="mb-2 pb-2">
+                                <small className="text-muted">Joint Holder{customer.jointHolders.length > 1 ? 's' : ''}:</small>
+                                {customer.jointHolders.map((holder, index) => (
+                                  <div key={index} className="mb-0">
+                                    <strong>{holder.firstName} {holder.lastName}</strong>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="d-grid mt-auto">
                             <Link 
                               href={`/customers/${customer.id}`}
-                              className="btn btn-outline-primary btn-sm"
+                              className="btn btn-primary btn-sm w-100"
                             >
                               View Details
                             </Link>

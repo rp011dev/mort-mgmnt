@@ -54,7 +54,13 @@ export async function GET(request) {
         { email: { $regex: term, $options: 'i' } },
         { phone: { $regex: term, $options: 'i' } },
         { postcode: { $regex: term, $options: 'i' } },
-        { notes: { $regex: term, $options: 'i' } }
+        { notes: { $regex: term, $options: 'i' } },
+        // Joint account holder search fields
+        { jointFirstName: { $regex: term, $options: 'i' } },
+        { jointLastName: { $regex: term, $options: 'i' } },
+        { jointEmail: { $regex: term, $options: 'i' } },
+        { jointPhone: { $regex: term, $options: 'i' } },
+        { jointPostcode: { $regex: term, $options: 'i' } }
       ];
     }
     
@@ -176,6 +182,16 @@ export async function POST(request) {
       annualIncome: enquiryData.annualIncome || 0,
       preferredLender: enquiryData.preferredLender || '',
       mortgageType: enquiryData.mortgageType || 'Repayment',
+      // Joint account holder fields
+      jointFirstName: enquiryData.jointFirstName || '',
+      jointLastName: enquiryData.jointLastName || '',
+      jointEmail: enquiryData.jointEmail || '',
+      jointPhone: enquiryData.jointPhone || '',
+      jointDateOfBirth: enquiryData.jointDateOfBirth || '',
+      jointPostcode: enquiryData.jointPostcode || '',
+      jointEmploymentStatus: enquiryData.jointEmploymentStatus || 'employed',
+      jointAddress: enquiryData.jointAddress || '',
+      jointAnnualIncome: enquiryData.jointAnnualIncome || 0,
       ...auditFields,
       _version: 1
     };
@@ -242,9 +258,12 @@ export async function PUT(request) {
       _lastModified: timestamp
     }
     
+    // Exclude MongoDB internal/immutable fields before update
+    const { _id, _version: oldVersion, _createdBy, _createdAt, ...updateFields } = enquiryData;
+    
     // Prepare update data with versioning and audit trail
     const updateData = {
-      ...enquiryData,
+      ...updateFields,
       ...auditFields,
       _version: (currentEnquiry._version || 0) + 1
     };

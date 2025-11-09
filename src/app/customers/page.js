@@ -312,7 +312,7 @@ function CustomersContent() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Start typing (2+ letters) to search by name, email, phone, or postcode..."
+                placeholder="Start typing (2+ letters) to search by name, email, phone, postcode (includes joint holders)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
@@ -509,22 +509,22 @@ function CustomersContent() {
                     <div className="row mb-2">
                       <div className="col-6">
                         <small className="text-muted">Email:</small>
-                        <div>{customer.email}</div>
+                        <div className="small">{customer.email}</div>
                       </div>
                       <div className="col-6">
                         <small className="text-muted">Phone:</small>
-                        <div>{customer.phone}</div>
+                        <div className="small">{customer.phone}</div>
                       </div>
                     </div>
 
                     <div className="row mb-2">
                       <div className="col-6">
                         <small className="text-muted">Postcode:</small>
-                        <div>{customer.postcode}</div>
+                        <div className="small">{customer.postcode}</div>
                       </div>
                       <div className="col-6">
                         <small className="text-muted">Loan Amount:</small>
-                        <div>{formatCurrency(customer.loanAmount)}</div>
+                        <div className="small">{formatCurrency(customer.loanAmount)}</div>
                       </div>
                     </div>
 
@@ -548,6 +548,16 @@ function CustomersContent() {
                       </div>
                       <small className="text-muted small">{getStageProgress(customer.currentStage)}% Complete</small>
                     </div>
+                    {customer.customerAccountType === 'Joint' && customer.jointHolders?.length > 0 && (
+                      <div className="mb-2 pb-2">
+                        <small className="text-muted">Joint Holder{customer.jointHolders.length > 1 ? 's' : ''}:</small>
+                        {customer.jointHolders.map((holder, index) => (
+                          <div key={index} className="mb-0">
+                            <strong>{holder.firstName} {holder.lastName}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="d-grid mt-auto">

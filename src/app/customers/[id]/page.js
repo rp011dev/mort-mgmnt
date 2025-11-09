@@ -3003,10 +3003,10 @@ export default function CustomerDetail() {
                   <label className="form-label small mb-0">Author</label>
                   <div className="form-control-plaintext bg-light p-1 rounded small">
                     <i className="bi bi-person-circle me-1"></i>
-                    <strong>{currentUser ? currentUser.name : 'Loading...'}</strong>
-                    {currentUser && (
+                    <strong>{user ? user.name : 'Loading...'}</strong>
+                    {user && (
                       <div className="text-muted small">
-                        {currentUser.role} - {currentUser.department}
+                        {user.role || 'User'}
                       </div>
                     )}
                   </div>

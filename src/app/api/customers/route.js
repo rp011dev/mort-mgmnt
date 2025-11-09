@@ -57,7 +57,13 @@ export async function GET(request) {
         { lastName: { $regex: searchTerm, $options: 'i' } },
         { email: { $regex: searchTerm, $options: 'i' } },
         { phone: { $regex: searchTerm, $options: 'i' } },
-        { postcode: { $regex: searchTerm, $options: 'i' } }
+        { postcode: { $regex: searchTerm, $options: 'i' } },
+        // Search in joint holders
+        { 'jointHolders.firstName': { $regex: searchTerm, $options: 'i' } },
+        { 'jointHolders.lastName': { $regex: searchTerm, $options: 'i' } },
+        { 'jointHolders.email': { $regex: searchTerm, $options: 'i' } },
+        { 'jointHolders.phone': { $regex: searchTerm, $options: 'i' } },
+        { 'jointHolders.postcode': { $regex: searchTerm, $options: 'i' } }
       ]
     }
     

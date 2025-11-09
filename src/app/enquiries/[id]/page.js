@@ -47,6 +47,23 @@ export default function EnquiryDetails({ params }) {
 
   useEffect(() => {
     if (enquiry && showConversionForm) {
+      // Build joint holders array if enquiry has joint account holder
+      const jointHolders = [];
+      if (enquiry.customerAccountType === 'Joint' && 
+          (enquiry.jointFirstName || enquiry.jointLastName)) {
+        jointHolders.push({
+          firstName: enquiry.jointFirstName || '',
+          lastName: enquiry.jointLastName || '',
+          email: enquiry.jointEmail || '',
+          phone: enquiry.jointPhone || '',
+          dateOfBirth: enquiry.jointDateOfBirth || '',
+          postcode: enquiry.jointPostcode || '',
+          employmentStatus: enquiry.jointEmploymentStatus || 'employed',
+          address: enquiry.jointAddress || '',
+          annualIncome: enquiry.jointAnnualIncome || '0'
+        });
+      }
+
       // Pre-populate form with enquiry data
       setConversionFormData({
         firstName: enquiry.firstName || '',
@@ -57,7 +74,7 @@ export default function EnquiryDetails({ params }) {
         address: enquiry.address || '',
         dateOfBirth: enquiry.dateOfBirth || '',
         customerAccountType: enquiry.customerAccountType || 'Sole',
-        jointHolders: [],
+        jointHolders: jointHolders,
         category: enquiry.enquiryType === 'Mortgage' ? 'Mortgages' : enquiry.enquiryType === 'Protection' ? 'Protection' : 'Insurance',
         lender: enquiry.preferredLender || '',
         mortgageType: enquiry.mortgageType || '',
@@ -317,6 +334,8 @@ export default function EnquiryDetails({ params }) {
       phone: enquiry.phone || '',
       postcode: enquiry.postcode || '',
       address: enquiry.address || '',
+      dateOfBirth: enquiry.dateOfBirth || '',
+      customerAccountType: enquiry.customerAccountType || 'Sole',
       enquiryType: enquiry.enquiryType || 'Mortgage',
       loanAmount: enquiry.loanAmount || '',
       propertyValue: enquiry.propertyValue || '',
@@ -327,7 +346,17 @@ export default function EnquiryDetails({ params }) {
       notes: enquiry.notes || '',
       status: enquiry.status || 'new',
       assignedTo: enquiry.assignedTo || '',
-      followUpDate: enquiry.followUpDate || ''
+      followUpDate: enquiry.followUpDate || '',
+      // Joint account holder fields
+      jointFirstName: enquiry.jointFirstName || '',
+      jointLastName: enquiry.jointLastName || '',
+      jointEmail: enquiry.jointEmail || '',
+      jointPhone: enquiry.jointPhone || '',
+      jointDateOfBirth: enquiry.jointDateOfBirth || '',
+      jointPostcode: enquiry.jointPostcode || '',
+      jointEmploymentStatus: enquiry.jointEmploymentStatus || 'employed',
+      jointAddress: enquiry.jointAddress || '',
+      jointAnnualIncome: enquiry.jointAnnualIncome || '0'
     })
     setIsEditing(true)
   }
@@ -353,7 +382,17 @@ export default function EnquiryDetails({ params }) {
         propertyValue: editFormData.enquiryType === 'Mortgage' ? parseInt(editFormData.propertyValue) || 0 : 0,
         annualIncome: parseInt(editFormData.annualIncome) || 0,
         assignedTo: editFormData.assignedTo || null,
-        followUpDate: editFormData.followUpDate || null
+        followUpDate: editFormData.followUpDate || null,
+        // Include joint account holder fields
+        jointFirstName: editFormData.customerAccountType === 'Joint' ? editFormData.jointFirstName : '',
+        jointLastName: editFormData.customerAccountType === 'Joint' ? editFormData.jointLastName : '',
+        jointEmail: editFormData.customerAccountType === 'Joint' ? editFormData.jointEmail : '',
+        jointPhone: editFormData.customerAccountType === 'Joint' ? editFormData.jointPhone : '',
+        jointDateOfBirth: editFormData.customerAccountType === 'Joint' ? editFormData.jointDateOfBirth : '',
+        jointPostcode: editFormData.customerAccountType === 'Joint' ? editFormData.jointPostcode : '',
+        jointEmploymentStatus: editFormData.customerAccountType === 'Joint' ? editFormData.jointEmploymentStatus : '',
+        jointAddress: editFormData.customerAccountType === 'Joint' ? editFormData.jointAddress : '',
+        jointAnnualIncome: editFormData.customerAccountType === 'Joint' ? parseInt(editFormData.jointAnnualIncome) || 0 : 0
       }
 
       // Clean up mortgage-specific fields for Protection enquiries
@@ -755,6 +794,18 @@ export default function EnquiryDetails({ params }) {
                         </span>
                       </span>
                     </div>
+                    {enquiry.employmentStatus && (
+                      <div className="mb-2 detail-item">
+                        <span className="detail-label">Employment Status:</span> 
+                        <span className="detail-value">{enquiry.employmentStatus}</span>
+                      </div>
+                    )}
+                    {(enquiry.annualIncome !== undefined && enquiry.annualIncome !== null) && (
+                      <div className="mb-2 detail-item">
+                        <span className="detail-label">Annual Income:</span> 
+                        <span className="detail-value fw-semibold">£{Number(enquiry.annualIncome).toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="mb-2 detail-item">
                       <span className="detail-label">Address:</span> 
                       <span className="detail-value">{enquiry.address}</span>
@@ -813,6 +864,68 @@ export default function EnquiryDetails({ params }) {
                       </div>
                     )}
                   </div>
+
+                  {/* Joint Account Holder Information - View Mode */}
+                  {enquiry.customerAccountType === 'Joint' && (enquiry.jointFirstName || enquiry.jointLastName) && (
+                    <>
+                      <hr className="my-3" />
+                      <h6 className="text-muted mb-2 section-title" style={{fontSize: '0.8rem'}}>Joint Account Holder</h6>
+                      <div className="row">
+                        <div className="col-md-6">
+                          {(enquiry.jointFirstName || enquiry.jointLastName) && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Name:</span> 
+                              <span className="detail-value fw-semibold">{enquiry.jointFirstName} {enquiry.jointLastName}</span>
+                            </div>
+                          )}
+                          {enquiry.jointEmail && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Email:</span> 
+                              <a href={`mailto:${enquiry.jointEmail}`} className="detail-value detail-link">{enquiry.jointEmail}</a>
+                            </div>
+                          )}
+                          {enquiry.jointPhone && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Phone:</span> 
+                              <a href={`tel:${enquiry.jointPhone}`} className="detail-value detail-link">{enquiry.jointPhone}</a>
+                            </div>
+                          )}
+                          {enquiry.jointDateOfBirth && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Date of Birth:</span> 
+                              <span className="detail-value">{new Date(enquiry.jointDateOfBirth).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="col-md-6">
+                          {enquiry.jointEmploymentStatus && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Employment Status:</span> 
+                              <span className="detail-value">{enquiry.jointEmploymentStatus}</span>
+                            </div>
+                          )}
+                          {(enquiry.jointAnnualIncome !== undefined && enquiry.jointAnnualIncome !== null) && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Annual Income:</span> 
+                              <span className="detail-value fw-semibold">£{Number(enquiry.jointAnnualIncome).toLocaleString()}</span>
+                            </div>
+                          )}
+                          {enquiry.jointAddress && (
+                            <div className="mb-2 detail-item">
+                              <span className="detail-label">Address:</span> 
+                              <span className="detail-value">{enquiry.jointAddress}</span>
+                            </div>
+                          )}
+                          {enquiry.jointPostcode && (
+                            <div className="mb-0 detail-item">
+                              <span className="detail-label">Postcode:</span> 
+                              <span className="detail-value fw-semibold text-primary">{enquiry.jointPostcode}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 // Edit Mode
@@ -922,6 +1035,108 @@ export default function EnquiryDetails({ params }) {
                       onChange={(e) => handleEditFormChange('annualIncome', e.target.value)}
                     />
                   </div>
+
+                  {/* Joint Account Holder Information - Edit Mode */}
+                  {editFormData.customerAccountType === 'Joint' && (
+                    <>
+                      <h6 className="text-muted mb-2 mt-3" style={{fontSize: '0.75rem'}}>Joint Account Holder Details</h6>
+                      <div className="row mb-2">
+                        <div className="col-md-6">
+                          <label className="form-label small">First Name</label>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointFirstName}
+                            onChange={(e) => handleEditFormChange('jointFirstName', e.target.value)}
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small">Last Name</label>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointLastName}
+                            onChange={(e) => handleEditFormChange('jointLastName', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="row mb-2">
+                        <div className="col-md-6">
+                          <label className="form-label small">Email</label>
+                          <input
+                            type="email"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointEmail}
+                            onChange={(e) => handleEditFormChange('jointEmail', e.target.value)}
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small">Phone</label>
+                          <input
+                            type="tel"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointPhone}
+                            onChange={(e) => handleEditFormChange('jointPhone', e.target.value)}
+                            placeholder="07XXXXXXXXX"
+                          />
+                        </div>
+                      </div>
+                      <div className="row mb-2">
+                        <div className="col-md-6">
+                          <label className="form-label small">Date of Birth</label>
+                          <input
+                            type="date"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointDateOfBirth || ''}
+                            onChange={(e) => handleEditFormChange('jointDateOfBirth', e.target.value)}
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small">Employment Status</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={editFormData.jointEmploymentStatus}
+                            onChange={(e) => handleEditFormChange('jointEmploymentStatus', e.target.value)}
+                          >
+                            <option value="employed">Employed</option>
+                            <option value="self-employed">Self Employed</option>
+                            <option value="retired">Retired</option>
+                            <option value="unemployed">Unemployed</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="row mb-2">
+                        <div className="col-md-6">
+                          <label className="form-label small">Postcode</label>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointPostcode}
+                            onChange={(e) => handleEditFormChange('jointPostcode', e.target.value)}
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small">Annual Income</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            value={editFormData.jointAnnualIncome}
+                            onChange={(e) => handleEditFormChange('jointAnnualIncome', e.target.value)}
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-2">
+                        <label className="form-label small">Address</label>
+                        <textarea
+                          className="form-control form-control-sm"
+                          value={editFormData.jointAddress}
+                          onChange={(e) => handleEditFormChange('jointAddress', e.target.value)}
+                          rows="2"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <h6 className="text-muted mb-2 mt-3" style={{fontSize: '0.75rem'}}>Enquiry Details</h6>
                   <div className="row mb-2">
@@ -1050,67 +1265,6 @@ export default function EnquiryDetails({ params }) {
             </div>
           </div>
 
-          {/* Financial Details */}
-          {(enquiry.loanAmount || enquiry.propertyValue || enquiry.annualIncome) && (
-            <div className="card mb-2">
-              <div className="card-header py-1">
-                <h6 className="mb-0" style={{fontSize: '0.85rem'}}>Financial Information</h6>
-              </div>
-              <div className="card-body py-2 px-3">
-                <div className="row">
-                  <div className="col-md-4">
-                    {enquiry.loanAmount && (
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Loan Amount:</span> 
-                        <span className="detail-value fw-bold text-success">{formatCurrency(enquiry.loanAmount)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="col-md-4">
-                    {enquiry.propertyValue && (
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Property Value:</span> 
-                        <span className="detail-value fw-bold text-info">{formatCurrency(enquiry.propertyValue)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="col-md-4">
-                    {enquiry.annualIncome && (
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Annual Income:</span> 
-                        <span className="detail-value fw-bold text-primary">{formatCurrency(enquiry.annualIncome)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {enquiry.loanAmount && enquiry.propertyValue && (
-                  <div className="row">
-                    <div className="col-md-4">
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">LTV:</span> 
-                        <span className="detail-value">
-                          <span className={`badge ${((enquiry.loanAmount / enquiry.propertyValue) * 100) > 80 ? 'bg-warning' : 'bg-success'}`}>
-                            {((enquiry.loanAmount / enquiry.propertyValue) * 100).toFixed(1)}%
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {enquiry.employmentStatus && (
-                  <div className="row">
-                    <div className="col-md-6">
-                      <div className="mb-2 detail-item">
-                        <span className="detail-label">Employment Status:</span> 
-                        <span className="detail-value">{enquiry.employmentStatus}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Mortgage Details */}
           {(enquiry.mortgageType || enquiry.preferredLender) && (
             <div className="card mb-2">
@@ -1151,10 +1305,10 @@ export default function EnquiryDetails({ params }) {
                   <label className="form-label small">Author</label>
                   <div className="form-control-plaintext bg-light p-2 rounded small" style={{fontSize: '0.75rem'}}>
                     <i className="bi bi-person-circle me-2"></i>
-                    <strong>{currentUser ? currentUser.name : 'Loading...'}</strong>
-                    {currentUser && (
+                    <strong>{user ? user.name : 'Loading...'}</strong>
+                    {user && (
                       <div className="text-muted small">
-                        {currentUser.role} - {currentUser.department}
+                        {user.role || 'User'}{user.department ? ` - ${user.department}` : ''}
                       </div>
                     )}
                   </div>
@@ -1429,6 +1583,152 @@ export default function EnquiryDetails({ params }) {
                       </div>
                     </div>
                   </div>
+
+                  {/* Joint Account Holder Information */}
+                  {conversionFormData.customerAccountType === 'Joint' && conversionFormData.jointHolders && conversionFormData.jointHolders.length > 0 && (
+                    <div className="mb-4">
+                      <h6 className="text-primary mb-3">Joint Account Holder Information</h6>
+                      {conversionFormData.jointHolders.map((holder, index) => (
+                        <div key={index} className="border rounded p-3 mb-3">
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className="badge bg-info">Joint Holder {index + 1}</span>
+                          </div>
+                          <div className="row">
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">First Name</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={holder.firstName || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].firstName = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Last Name</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={holder.lastName || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].lastName = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="row">
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Email</label>
+                              <input
+                                type="email"
+                                className="form-control"
+                                value={holder.email || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].email = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Phone</label>
+                              <input
+                                type="tel"
+                                className="form-control"
+                                value={holder.phone || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].phone = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                                placeholder="07XXXXXXXXX"
+                              />
+                            </div>
+                          </div>
+                          <div className="row">
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Date of Birth</label>
+                              <input
+                                type="date"
+                                className="form-control"
+                                value={holder.dateOfBirth || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].dateOfBirth = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Employment Status</label>
+                              <select
+                                className="form-select"
+                                value={holder.employmentStatus || 'employed'}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].employmentStatus = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              >
+                                <option value="employed">Employed</option>
+                                <option value="self-employed">Self Employed</option>
+                                <option value="retired">Retired</option>
+                                <option value="unemployed">Unemployed</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="row">
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Address</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={holder.address || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].address = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              />
+                            </div>
+                            <div className="col-md-3 mb-3">
+                              <label className="form-label">Postcode</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={holder.postcode || ''}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].postcode = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                              />
+                            </div>
+                            <div className="col-md-3 mb-3">
+                              <label className="form-label">Annual Income</label>
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={holder.annualIncome || '0'}
+                                onChange={(e) => {
+                                  const updatedHolders = [...conversionFormData.jointHolders];
+                                  updatedHolders[index].annualIncome = e.target.value;
+                                  handleFormChange('jointHolders', updatedHolders);
+                                }}
+                                min="0"
+                                placeholder="Annual income"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Application Details */}
                   <div className="mb-4">

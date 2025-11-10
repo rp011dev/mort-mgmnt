@@ -15,6 +15,14 @@ async function getUsersCollection() {
   return usersCollection
 }
 
+async function findUserByEmail(email) {
+  const collection = await getUsersCollection()
+  return await collection.findOne({ 
+    email: email.toLowerCase(),
+    active: true 
+  })
+}
+
 export async function POST(request) {
   try {
     const { email, password } = await request.json()

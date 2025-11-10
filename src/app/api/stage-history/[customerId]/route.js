@@ -64,6 +64,10 @@ export async function GET(req, { params }) {
     // Remove MongoDB _id field from results
     const cleanHistory = customerHistory.map(({ _id, ...entry }) => entry)
 
+    // Get customer details to fetch current stage
+    const customersCollection = await getCollection(MONGODB_CONFIG.collections.customers)
+    const customer = await customersCollection.findOne({ id: customerId })
+    
     // Get current stage of this customer
     const currentStage = customer?.currentStage || null
 

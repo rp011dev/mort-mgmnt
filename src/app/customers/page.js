@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 
 function CustomersContent() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const searchParams = useSearchParams()
   const [customers, setCustomers] = useState([])
   const [allCustomers, setAllCustomers] = useState([]) // For filter dropdown options
@@ -30,32 +30,46 @@ function CustomersContent() {
       setStageFilter(stage)
     }
     
-    loadAllCustomers() // Load all customers for filter options
-    setInitialLoad(false)
-  }, [searchParams])
+    // Only load customers after auth is ready
+    if (!authLoading && authenticatedFetch) {
+      loadAllCustomers() // Load all customers for filter options
+      setInitialLoad(false)
+    }
+  }, [searchParams, authLoading, authenticatedFetch])
 
   useEffect(() => {
-    if (!initialLoad) {
+    if (!initialLoad && !authLoading && authenticatedFetch) {
       searchCustomers() // Load customers when filters change, but not on initial load
     }
-  }, [stageFilter, lenderFilter, mortgageTypeFilter, categoryFilter, initialLoad])
+  }, [stageFilter, lenderFilter, mortgageTypeFilter, categoryFilter, initialLoad, authLoading, authenticatedFetch])
 
   useEffect(() => {
-    if (!initialLoad) {
+    if (!initialLoad && !authLoading && authenticatedFetch) {
       searchCustomers() // Search when initial load is complete
     }
-  }, [initialLoad])
+  }, [initialLoad, authLoading, authenticatedFetch])
 
   // Auto-search when user types 2 or more characters
   useEffect(() => {
-    if (!initialLoad && searchTerm.length >= 2) {
+    if (!initialLoad && !authLoading && authenticatedFetch && searchTerm.length >= 2) {
       searchCustomers(1) // Start from page 1 when searching
     }
-  }, [searchTerm, initialLoad])
+  }, [searchTerm, initialLoad, authLoading, authenticatedFetch])
 
   const loadAllCustomers = async () => {
+    console.log('🔍 loadAllCustomers called')
+    console.log('🔍 authenticatedFetch available?', !!authenticatedFetch)
+    console.log('🔍 authenticatedFetch type:', typeof authenticatedFetch)
+    
+    if (!authenticatedFetch) {
+      console.warn('❌ authenticatedFetch not available yet, skipping loadAllCustomers')
+      return
+    }
+    
+    console.log('✅ Using authenticatedFetch for /api/customers')
+    
     try {
-      const response = await fetch('/api/customers?limit=100') // Get all customers for filter options
+      const response = await authenticatedFetch('/api/customers?limit=100') // Get all customers for filter options
       const data = await response.json()
       setAllCustomers(data.customers || []) // Extract the customers array
     } catch (error) {
@@ -65,6 +79,11 @@ function CustomersContent() {
   }
 
   const searchCustomers = async (page = 1) => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet, skipping searchCustomers')
+      return
+    }
+    
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -78,7 +97,7 @@ function CustomersContent() {
       if (mortgageTypeFilter !== 'all') params.append('mortgageType', mortgageTypeFilter)
       if (categoryFilter !== 'all') params.append('category', categoryFilter)
       
-      const response = await fetch(`/api/customers?${params}`)
+      const response = await authenticatedFetch(`/api/customers?${params}`)
       const data = await response.json()
       
       setCustomers(data.customers || [])
@@ -217,6 +236,11 @@ function CustomersContent() {
   }
 
   const searchCustomersWithFilter = async (overrideFilters = {}, page = 1) => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet, skipping searchCustomersWithFilter')
+      return
+    }
+    
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -236,7 +260,7 @@ function CustomersContent() {
       if (currentMortgageType !== 'all') params.append('mortgageType', currentMortgageType)
       if (currentCategory !== 'all') params.append('category', currentCategory)
       
-      const response = await fetch(`/api/customers?${params}`)
+      const response = await authenticatedFetch(`/api/customers?${params}`)
       const data = await response.json()
       
       setCustomers(data.customers || [])

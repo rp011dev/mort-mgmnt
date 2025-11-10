@@ -186,20 +186,25 @@ await fetch(`/api/stage-history/${customerId}`, {
 }
 ```
 
-## Fallback Behavior
+## Security Enhancement (Updated Nov 10, 2025)
 
-If no authentication token is provided or token is invalid:
-- Audit fields will use "System" as the default user
-- This ensures the application continues to work even if authentication fails
-- However, you should ensure all frontend pages send the token
+**⚠️ IMPORTANT: Centralized Authentication Now Active**
+
+As of November 10, 2025, all API endpoints require valid authentication tokens. There is **NO** fallback to "System" user.
+
+- ✅ All API requests must include valid JWT token in Authorization header
+- ❌ Requests without tokens are blocked at middleware level (401 Unauthorized)
+- ✅ This ensures complete accountability - every action is tied to a real user
+- ✅ See [CENTRALIZED_AUTH_IMPLEMENTATION.md](CENTRALIZED_AUTH_IMPLEMENTATION.md) for details
 
 ## Benefits
 
 1. **Full Audit Trail**: Know exactly who made what changes and when
-2. **Accountability**: Track user actions for compliance and troubleshooting
+2. **Accountability**: Track user actions for compliance and troubleshooting - NO anonymous changes
 3. **Data Integrity**: Audit information is automatically added, reducing human error
-4. **Security**: Uses JWT tokens to verify user identity
+4. **Security**: Uses JWT tokens to verify user identity + centralized middleware protection
 5. **Transparency**: Easy to see the history of changes to any record
+6. **Access Control**: Unauthorized users cannot access or modify any data via direct API calls
 
 ## Testing
 

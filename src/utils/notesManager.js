@@ -1,8 +1,9 @@
 // Notes management utility - now uses API to save to JSON file
 
-export const getCustomerNotes = async (customerId) => {
+export const getCustomerNotes = async (customerId, authenticatedFetch) => {
   try {
-    const response = await fetch(`/api/notes?customerId=${customerId}`)
+    const fetchFn = authenticatedFetch || fetch
+    const response = await fetchFn(`/api/notes?customerId=${customerId}`)
     const notes = await response.json()
     
     if (!response.ok) {
@@ -17,9 +18,10 @@ export const getCustomerNotes = async (customerId) => {
   }
 }
 
-export const addCustomerNote = async (customerId, note, author = 'Current User', stage = null) => {
+export const addCustomerNote = async (customerId, note, author = 'Current User', stage = null, authenticatedFetch) => {
   try {
-    const response = await fetch('/api/notes', {
+    const fetchFn = authenticatedFetch || fetch
+    const response = await fetchFn('/api/notes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,10 +46,11 @@ export const addCustomerNote = async (customerId, note, author = 'Current User',
   }
 }
 
-export const getAllNotes = async () => {
+export const getAllNotes = async (authenticatedFetch) => {
   try {
     // Fetch all notes (no customerId parameter)
-    const response = await fetch('/api/notes')
+    const fetchFn = authenticatedFetch || fetch
+    const response = await fetchFn('/api/notes')
     const notes = await response.json()
     
     if (!response.ok) {
@@ -61,13 +64,13 @@ export const getAllNotes = async () => {
   }
 }
 
-export const getNotesCount = async (customerId) => {
-  const notes = await getCustomerNotes(customerId)
+export const getNotesCount = async (customerId, authenticatedFetch) => {
+  const notes = await getCustomerNotes(customerId, authenticatedFetch)
   return notes.length
 }
 
-export const getLatestNote = async (customerId) => {
-  const notes = await getCustomerNotes(customerId)
+export const getLatestNote = async (customerId, authenticatedFetch) => {
+  const notes = await getCustomerNotes(customerId, authenticatedFetch)
   if (notes.length === 0) return null
   
   return notes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]

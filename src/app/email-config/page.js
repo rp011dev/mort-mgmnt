@@ -1,18 +1,27 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function EmailConfigChecker() {
+  const { authenticatedFetch, authLoading } = useAuth()
   const [configStatus, setConfigStatus] = useState(null)
   const [testResult, setTestResult] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    checkConfiguration()
-  }, [])
+    if (!authLoading && authenticatedFetch) {
+      checkConfiguration()
+    }
+  }, [authLoading, authenticatedFetch])
 
   const checkConfiguration = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
-      const response = await fetch('/api/email-config')
+      const response = await authenticatedFetch('/api/email-config')
       const data = await response.json()
       setConfigStatus(data.config)
     } catch (error) {
@@ -21,11 +30,20 @@ export default function EmailConfigChecker() {
   }
 
   const testConfiguration = async () => {
+    if (!authenticatedFetch) {
+      setTestResult({
+        success: false,
+        message: 'Test failed',
+        error: 'Authentication not ready'
+      })
+      return
+    }
+    
     setLoading(true)
     setTestResult(null)
     
     try {
-      const response = await fetch('/api/email-config', { method: 'POST' })
+      const response = await authenticatedFetch('/api/email-config', { method: 'POST' })
       const data = await response.json()
       setTestResult(data)
     } catch (error) {

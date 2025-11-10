@@ -1,8 +1,9 @@
 // Customers management utility - uses API to interact with customers.json file
 
-export const getCustomer = async (customerId) => {
+export const getCustomer = async (customerId, authenticatedFetch) => {
   try {
-    const response = await fetch(`/api/customers?customerId=${customerId}`)
+    const fetchFn = authenticatedFetch || fetch
+    const response = await fetchFn(`/api/customers?customerId=${customerId}`)
     const customer = await response.json()
     
     if (!response.ok) {
@@ -16,9 +17,10 @@ export const getCustomer = async (customerId) => {
   }
 }
 
-export const getAllCustomers = async () => {
+export const getAllCustomers = async (authenticatedFetch) => {
   try {
-    const response = await fetch('/api/customers')
+    const fetchFn = authenticatedFetch || fetch
+    const response = await fetchFn('/api/customers')
     const customers = await response.json()
     
     if (!response.ok) {
@@ -32,9 +34,10 @@ export const getAllCustomers = async () => {
   }
 }
 
-export const updateCustomer = async (customerId, customerData) => {
+export const updateCustomer = async (customerId, customerData, authenticatedFetch) => {
   try {
-    const response = await fetch('/api/customers', {
+    const fetchFn = authenticatedFetch || fetch
+    const response = await fetchFn('/api/customers', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

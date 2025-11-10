@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { authenticatedFetch, isAuthenticated, getAuthHeaders } from '@/utils/authenticatedFetch'
 
 export function useAuth(requireAuth = true) {
   const router = useRouter()
@@ -85,5 +86,14 @@ export function useAuth(requireAuth = true) {
     }
   }
 
-  return { user, loading, authenticated, logout }
+  return { 
+    user, 
+    loading, 
+    authenticated, 
+    logout,
+    // Export utility functions for use in components
+    authenticatedFetch,
+    isAuthenticated,
+    getAuthHeaders
+  }
 }

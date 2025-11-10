@@ -2,12 +2,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useUser } from '../../../context/UserContext'
 import { useAuth } from '../../../hooks/useAuth'
 
 export default function EnquiryDetails({ params }) {
-  const { user, loading: authLoading, logout } = useAuth()
-  const { currentUser } = useUser()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const [enquiry, setEnquiry] = useState(null)
   const [enquiryNotes, setEnquiryNotes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -41,9 +39,11 @@ export default function EnquiryDetails({ params }) {
   const router = useRouter()
 
   useEffect(() => {
-    loadEnquiry()
-    loadNotes()
-  }, [params.id])
+    if (authenticatedFetch) {
+      loadEnquiry()
+      loadNotes()
+    }
+  }, [params.id, authenticatedFetch])
 
   useEffect(() => {
     if (enquiry && showConversionForm) {
@@ -95,9 +95,15 @@ export default function EnquiryDetails({ params }) {
   }, [enquiry, showConversionForm])
 
   const loadEnquiry = async () => {
+    // Safety guard: wait for authentication to be ready
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+
     try {
       setLoading(true)
-      const response = await fetch(`/api/enquiries?enquiryId=${params.id}`)
+      const response = await authenticatedFetch(`/api/enquiries?enquiryId=${params.id}`)
       
       if (!response.ok) {
         throw new Error('Enquiry not found')
@@ -114,8 +120,13 @@ export default function EnquiryDetails({ params }) {
   }
 
   const loadNotes = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
-      const response = await fetch(`/api/notes?enquiryId=${params.id}&sortOrder=desc`)
+      const response = await authenticatedFetch(`/api/notes?enquiryId=${params.id}&sortOrder=desc`)
       if (response.ok) {
         const data = await response.json()
         // The API returns paginated data with notes array inside
@@ -131,16 +142,19 @@ export default function EnquiryDetails({ params }) {
 
   const addNote = async () => {
     if (!newNote.trim()) return
+    
+    if (!authenticatedFetch) {
+      console.error('Authentication not ready')
+      return
+    }
 
     try {
       setAddingNote(true)
       
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/notes`, {
+      const response = await authenticatedFetch(`/api/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           enquiryId: params.id,
@@ -196,7 +210,7 @@ export default function EnquiryDetails({ params }) {
             stage: conversionFormData.currentStage || 'initial-enquiry-assessment',
             notes: `Converted from enquiry ${enquiry.id}: ${enquiry.notes || 'Initial enquiry conversion'}`,
             timestamp: new Date().toISOString(),
-            user: currentUser ? currentUser.name : 'System'
+            user: user?.name || 'System'
           }
         ],
         loanAmount: parseFloat(conversionFormData.loanAmount) || 0,
@@ -214,7 +228,7 @@ export default function EnquiryDetails({ params }) {
       }
 
       // Add to customers
-      const customerResponse = await fetch('/api/customers', {
+      const customerResponse = await authenticatedFetch('/api/customers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -249,7 +263,7 @@ export default function EnquiryDetails({ params }) {
             }
           }
 
-          const productResponse = await fetch('/api/products', {
+          const productResponse = await authenticatedFetch('/api/products', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -275,7 +289,7 @@ export default function EnquiryDetails({ params }) {
         closureReason: 'converted-to-customer'
       }
 
-      const updateResponse = await fetch(`/api/enquiries?enquiryId=${enquiry.id}`, {
+      const updateResponse = await authenticatedFetch(`/api/enquiries?enquiryId=${enquiry.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -401,7 +415,7 @@ export default function EnquiryDetails({ params }) {
         updatedData.preferredLender = editFormData.preferredLender || 'Legal & General'
       }
 
-      const response = await fetch(`/api/enquiries?enquiryId=${enquiry.id}`, {
+      const response = await authenticatedFetch(`/api/enquiries?enquiryId=${enquiry.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -458,8 +472,13 @@ export default function EnquiryDetails({ params }) {
   }
 
   const loadCustomers = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
-      const response = await fetch('/api/customers')
+      const response = await authenticatedFetch('/api/customers')
       if (!response.ok) {
         throw new Error('Failed to fetch customers')
       }
@@ -510,7 +529,7 @@ export default function EnquiryDetails({ params }) {
         status: enquiry.status === 'new' ? 'contacted' : enquiry.status // Update status if it was new
       }
 
-      const response = await fetch(`/api/enquiries?enquiryId=${enquiry.id}`, {
+      const response = await authenticatedFetch(`/api/enquiries?enquiryId=${enquiry.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

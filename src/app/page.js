@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Home() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const [customers, setCustomers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -12,10 +12,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && authenticatedFetch) {
       loadCustomers()
     }
-  }, [authLoading])
+  }, [authLoading, authenticatedFetch])
 
   // Auto-search when user types 2 or more characters
   useEffect(() => {
@@ -55,10 +55,15 @@ export default function Home() {
   }, [searchTerm, customers])
 
   const loadAllData = async (endpoint, dataKey = null, supportsPagination = true) => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return []
+    }
+
     if (!supportsPagination) {
       // For APIs that don't support pagination, just make a single call
       try {
-        const response = await fetch(endpoint)
+        const response = await authenticatedFetch(endpoint)
         if (!response.ok) return []
         const result = await response.json()
         return dataKey ? result[dataKey] : result
@@ -76,7 +81,7 @@ export default function Home() {
     while (hasMoreData) {
       try {
         const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}&limit=50`
-        const response = await fetch(url)
+        const response = await authenticatedFetch(url)
         if (!response.ok) break
 
         const result = await response.json()

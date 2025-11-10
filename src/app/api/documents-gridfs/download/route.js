@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/utils/authMiddleware'
 import { downloadFileFromGridFS } from '@/utils/gridFsManager'
+import { jwtVerify } from 'jose'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,29 +17,46 @@ export async function GET(request) {
     const tokenFromQuery = searchParams.get('token')
     const view = searchParams.get('view') === 'true'
 
+    console.log('📥 Download request received:', {
+      fileId,
+      hasTokenInQuery: !!tokenFromQuery,
+      view
+    })
+
     // Check authentication - support token in query param for downloads
     let user = getUserFromRequest(request)
     
+    console.log('🔐 User from header:', user ? 'Found' : 'Not found')
+    
     // If no user from header, try query param token
     if (!user && tokenFromQuery) {
-      // Validate token from query param
-      const jwt = require('jsonwebtoken')
+      console.log('🔑 Attempting to validate token from query parameter')
+      // Validate token from query param using jose
       try {
-        user = jwt.verify(tokenFromQuery, process.env.JWT_SECRET || 'your-secret-key-change-in-production')
+        const secret = new TextEncoder().encode(
+          process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+        )
+        const { payload } = await jwtVerify(tokenFromQuery, secret)
+        user = payload
+        console.log('✅ Token validated successfully:', { email: user.email })
       } catch (err) {
+        console.error('❌ Token validation failed:', err.message)
         return NextResponse.json(
-          { error: 'Invalid token' },
+          { error: 'Invalid token', details: err.message },
           { status: 401 }
         )
       }
     }
     
     if (!user) {
+      console.error('❌ No user found - unauthorized')
       return NextResponse.json(
         { error: 'Unauthorized - Valid token required' },
         { status: 401 }
       )
     }
+    
+    console.log('✅ User authenticated, proceeding with download')
 
     if (!fileId) {
       return NextResponse.json(

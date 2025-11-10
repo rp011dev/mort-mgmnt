@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../../../hooks/useAuth'
 
 export default function NewEnquiry() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState([])
   const [formData, setFormData] = useState({
@@ -44,12 +44,19 @@ export default function NewEnquiry() {
   const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
-    loadUsers()
-  }, [])
+    if (!authLoading && authenticatedFetch) {
+      loadUsers()
+    }
+  }, [authLoading, authenticatedFetch])
 
   const loadUsers = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
-      const response = await fetch('/api/users')
+      const response = await authenticatedFetch('/api/users')
       if (response.ok) {
         const data = await response.json()
         setUsers(data.users || [])
@@ -150,7 +157,7 @@ export default function NewEnquiry() {
         enquiryData.preferredLender = formData.preferredLender || 'Legal & General'
       }
 
-      const response = await fetch('/api/enquiries', {
+      const response = await authenticatedFetch('/api/enquiries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

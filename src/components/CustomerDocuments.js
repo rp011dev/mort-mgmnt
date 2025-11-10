@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function CustomerDocuments({ customerId }) {
+  const { authenticatedFetch, authLoading } = useAuth()
   const [customerDocuments, setCustomerDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -26,21 +28,23 @@ export default function CustomerDocuments({ customerId }) {
   }
 
   useEffect(() => {
-    loadDocuments()
-  }, [customerId])
+    if (!authLoading && authenticatedFetch && customerId) {
+      loadDocuments()
+    }
+  }, [customerId, authLoading, authenticatedFetch])
 
   const loadDocuments = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoading(true)
       console.log('📄 Loading documents for customer:', customerId)
       
       // Use GridFS API to load documents
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/documents-gridfs?customerId=${customerId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await authenticatedFetch(`/api/documents-gridfs?customerId=${customerId}`)
       
       console.log('📄 Documents API response status:', response.status)
       
@@ -78,6 +82,11 @@ export default function CustomerDocuments({ customerId }) {
 
   const confirmUpload = async () => {
     if (!selectedDocumentType || selectedFiles.length === 0) return
+    
+    if (!authenticatedFetch) {
+      alert('Authentication not ready. Please try again.')
+      return
+    }
 
     setUploading(true)
     setShowUploadModal(false)
@@ -86,8 +95,6 @@ export default function CustomerDocuments({ customerId }) {
     setUploadProgress({ [selectedDocumentType]: 0 })
 
     try {
-      const token = localStorage.getItem('token')
-      
       // Upload files one by one to GridFS
       let uploadedCount = 0
       const totalFiles = selectedFiles.length
@@ -99,11 +106,8 @@ export default function CustomerDocuments({ customerId }) {
         formData.append('documentType', selectedDocumentType)
         formData.append('status', 'received') // Default status
 
-        const response = await fetch('/api/documents-gridfs', {
+        const response = await authenticatedFetch('/api/documents-gridfs', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
           body: formData
         })
 
@@ -147,12 +151,10 @@ export default function CustomerDocuments({ customerId }) {
     try {
       setUpdatingStatus(fileId)
       
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/documents-gridfs', {
+      const response = await authenticatedFetch('/api/documents-gridfs', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           fileId,
@@ -252,11 +254,8 @@ export default function CustomerDocuments({ customerId }) {
     setDeleting(fileId)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/documents-gridfs?fileId=${fileId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await authenticatedFetch(`/api/documents-gridfs?fileId=${fileId}`, {
+        method: 'DELETE'
       })
 
       if (response.ok) {

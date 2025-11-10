@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '../../hooks/useAuth'
 
 export default function Dashboard() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const [customers, setCustomers] = useState([])
   const [enquiries, setEnquiries] = useState([])
   const [fees, setFees] = useState([])
@@ -19,7 +19,7 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && authenticatedFetch) {
       loadData()
       
       // Set up auto-refresh every 30 seconds for real-time updates
@@ -27,13 +27,19 @@ export default function Dashboard() {
       
       return () => clearInterval(interval)
     }
-  }, [authLoading])
+  }, [authLoading, authenticatedFetch])
 
   const loadAllData = async (endpoint, dataKey = null, supportsPagination = true) => {
+    // Safety guard: ensure authenticatedFetch is available
+    if (!authenticatedFetch) {
+      console.error('authenticatedFetch not available')
+      return []
+    }
+
     if (!supportsPagination) {
       // For APIs that don't support pagination (like fees), just make a single call
       try {
-        const response = await fetch(endpoint)
+        const response = await authenticatedFetch(endpoint)
         if (!response.ok) return []
         const result = await response.json()
         return dataKey ? result[dataKey] : result
@@ -51,7 +57,7 @@ export default function Dashboard() {
     while (hasMoreData) {
       try {
         const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}&limit=50`
-        const response = await fetch(url)
+        const response = await authenticatedFetch(url)
         if (!response.ok) break
 
         const result = await response.json()

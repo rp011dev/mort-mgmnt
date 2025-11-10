@@ -1,12 +1,42 @@
 import { NextResponse } from 'next/server'
-import { verifyToken, extractToken } from './auth'
+import * as jose from 'jose'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
 /**
- * Extract and verify user from request headers
- * @param {Request} request - Next.js request object
- * @returns {Object|null} - User object or null if invalid/missing token
+ * Verify and decode a JWT token (Edge Runtime compatible)
+ * @param {string} token - JWT token
+ * @returns {Promise<object|null>} - Decoded token payload or null if invalid
  */
-export function getUserFromRequest(request) {
+export async function verifyTokenEdge(token) {
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET)
+    const { payload } = await jose.jwtVerify(token, secret)
+    return payload
+  } catch (error) {
+    console.error('Token verification failed:', error.message)
+    return null
+  }
+}
+
+/**
+ * Extract token from Authorization header
+ * @param {string} authHeader - Authorization header value
+ * @returns {string|null} - Token or null
+ */
+export function extractToken(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null
+  }
+  return authHeader.substring(7)
+}
+
+/**
+ * Extract and verify user from request headers (Edge Runtime compatible)
+ * @param {Request} request - Next.js request object
+ * @returns {Promise<Object|null>} - User object or null if invalid/missing token
+ */
+export async function getUserFromRequest(request) {
   try {
     const authHeader = request.headers.get('authorization')
     
@@ -22,7 +52,7 @@ export function getUserFromRequest(request) {
       return null
     }
     
-    const decoded = verifyToken(token)
+    const decoded = await verifyTokenEdge(token)
     
     if (!decoded) {
       console.log('Token verification failed')
@@ -43,13 +73,13 @@ export function getUserFromRequest(request) {
 }
 
 /**
- * Middleware to require authentication
+ * Middleware to require authentication (Edge Runtime compatible)
  * Returns user if authenticated, otherwise returns error response
  * @param {Request} request - Next.js request object
- * @returns {Object} - { user, error } where error is NextResponse if auth failed
+ * @returns {Promise<Object>} - { user, error } where error is NextResponse if auth failed
  */
-export function requireAuth(request) {
-  const user = getUserFromRequest(request)
+export async function requireAuth(request) {
+  const user = await getUserFromRequest(request)
   
   if (!user) {
     return {

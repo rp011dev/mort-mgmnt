@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser } from '../../../context/UserContext'
 import { useAuth } from '../../../hooks/useAuth'
 import ConfirmModal from '../../../components/ConfirmModal'
 import NotificationToast from '../../../components/NotificationToast'
@@ -18,11 +17,10 @@ import {
 } from '../../../utils/feesManager'
 
 export default function CustomerDetail() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const params = useParams()
   const router = useRouter()
   const customerId = params.id
-  const { currentUser } = useUser()
   const [customer, setCustomer] = useState(null)
   const [customerNotes, setCustomerNotes] = useState([])
   const [customerProducts, setCustomerProducts] = useState([])
@@ -246,20 +244,27 @@ export default function CustomerDetail() {
   }
 
   useEffect(() => {
-    loadCustomer()
-    loadNotes()
-    loadProducts()
-    loadFees()
-    loadCustomerDocuments()
-    loadStageHistory()
-  }, [customerId])
+    if (!authLoading && authenticatedFetch && customerId) {
+      loadCustomer()
+      loadNotes()
+      loadProducts()
+      loadFees()
+      loadCustomerDocuments()
+      loadStageHistory()
+    }
+  }, [customerId, authLoading, authenticatedFetch])
 
   const loadStageHistory = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoadingStageHistory(true)
       //console.log('Loading stage history for customer:', customerId)
       
-      const response = await fetch(`/api/stage-history/${customerId}`)
+      const response = await authenticatedFetch(`/api/stage-history/${customerId}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -306,9 +311,14 @@ export default function CustomerDetail() {
   }
 
   const loadCustomer = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoading(true)
-      const response = await fetch(`/api/customers?customerId=${customerId}`)
+      const response = await authenticatedFetch(`/api/customers?customerId=${customerId}`)
       if (!response.ok) {
         throw new Error('Customer not found')
       }
@@ -330,8 +340,13 @@ export default function CustomerDetail() {
   }
 
   const loadProducts = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
-      const response = await fetch(`/api/products?customerId=${customerId}`)
+      const response = await authenticatedFetch(`/api/products?customerId=${customerId}`)
       if (response.ok) {
         const data = await response.json()
         // API might return an array directly or an object with a products/items field
@@ -348,9 +363,14 @@ export default function CustomerDetail() {
   }
 
   const loadFees = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoadingFees(true)
-      const response = await fetch(`/api/fees?customerId=${customerId}`)
+      const response = await authenticatedFetch(`/api/fees?customerId=${customerId}`)
       if (response.ok) {
         const fees = await response.json()
         setCustomerFees(fees)
@@ -363,9 +383,14 @@ export default function CustomerDetail() {
   }
 
   const loadCustomerDocuments = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoadingDocuments(true)
-      const response = await fetch(`/api/documents/list/${customerId}`)
+      const response = await authenticatedFetch(`/api/documents/list/${customerId}`)
       if (response.ok) {
         const result = await response.json()
         setCustomerDocuments(result.documents || {})
@@ -486,10 +511,15 @@ export default function CustomerDetail() {
   }
 
   const performDeleteDocument = async (documentType, fileName, documentKey) => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
       setDeletingDocument(documentKey)
       
-      const response = await fetch(`/api/documents/delete?customerId=${customerId}&documentType=${documentType}&fileName=${encodeURIComponent(fileName)}`, {
+      const response = await authenticatedFetch(`/api/documents/delete?customerId=${customerId}&documentType=${documentType}&fileName=${encodeURIComponent(fileName)}`, {
         method: 'DELETE'
       })
 
@@ -531,9 +561,14 @@ export default function CustomerDetail() {
   }
 
   const loadNotes = async (page = currentPage) => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoadingNotes(true)
-      const response = await fetch(`/api/notes?customerId=${customerId}&page=${page}&limit=${notesPerPage}&sortOrder=desc`)
+      const response = await authenticatedFetch(`/api/notes?customerId=${customerId}&page=${page}&limit=${notesPerPage}&sortOrder=desc`)
       if (response.ok) {
         const data = await response.json()
         setCustomerNotes(data.notes)
@@ -554,13 +589,18 @@ export default function CustomerDetail() {
   }
 
   const loadLinkedEnquiriesWithCustomerData = async (customerData) => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet')
+      return
+    }
+    
     try {
       setLoadingEnquiries(true)
       //console.log('Loading enquiries for customer:', customerData)
       //console.log('Customer ID:', customerId)
       
       // Request all enquiries with a high limit to get all records
-      const response = await fetch(`/api/enquiries?limit=1000`)
+      const response = await authenticatedFetch(`/api/enquiries?limit=1000`)
       if (response.ok) {
         const responseData = await response.json()
         // The API returns an object with enquiries array when paginated
@@ -608,9 +648,14 @@ export default function CustomerDetail() {
   }
 
   const handleSaveEdit = async () => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
       setSaving(true)
-      const response = await fetch(`/api/customers`, {
+      const response = await authenticatedFetch(`/api/customers`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -645,9 +690,14 @@ export default function CustomerDetail() {
   }
 
   const moveToStage = async (newStage, direction) => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
       // First update the customer's current stage
-      const customerResponse = await fetch(`/api/customers`, {
+      const customerResponse = await authenticatedFetch(`/api/customers`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -665,12 +715,10 @@ export default function CustomerDetail() {
       }
 
       // Then add a new stage history entry
-      const token = localStorage.getItem('token')
-      const stageHistoryResponse = await fetch(`/api/stage-history/${customerId}`, {
+      const stageHistoryResponse = await authenticatedFetch(`/api/stage-history/${customerId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           stage: newStage,
@@ -727,13 +775,18 @@ export default function CustomerDetail() {
   }
 
   const handleDocumentStatusChange = async (docType, newStatus) => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
       const updatedDocuments = {
         ...customer.documents,
         [docType]: newStatus
       }
 
-      const response = await fetch(`/api/customers`, {
+      const response = await authenticatedFetch(`/api/customers`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -761,6 +814,11 @@ export default function CustomerDetail() {
 
   const handleDocumentUpload = async (docType, files) => {
     if (!files || files.length === 0) return
+    
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
 
     try {
       setUploadingDocument(docType)
@@ -772,7 +830,7 @@ export default function CustomerDetail() {
         formData.append('customerId', customerId)
         formData.append('documentType', docType)
 
-        const response = await fetch('/api/documents/upload', {
+        const response = await authenticatedFetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
         })
@@ -866,16 +924,19 @@ export default function CustomerDetail() {
 
   const addNote = async () => {
     if (!newNote.trim()) return
+    
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
 
     try {
       setAddingNote(true)
       
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/notes`, {
+      const response = await authenticatedFetch(`/api/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
@@ -1006,12 +1067,10 @@ export default function CustomerDetail() {
 
     try {
       setSavingFee(true)
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/fees', {
+      const response = await authenticatedFetch('/api/fees', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId,
@@ -1058,12 +1117,10 @@ export default function CustomerDetail() {
         requestBody.paidDate = new Date().toISOString()
       }
 
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/fees', {
+      const response = await authenticatedFetch('/api/fees', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(requestBody),
       })
@@ -1103,8 +1160,13 @@ export default function CustomerDetail() {
   }
 
   const performDeleteFee = async (feeId) => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
-      const response = await fetch(`/api/fees?feeId=${feeId}&customerId=${customerId}`, {
+      const response = await authenticatedFetch(`/api/fees?feeId=${feeId}&customerId=${customerId}`, {
         method: 'DELETE'
       })
 
@@ -1165,15 +1227,18 @@ export default function CustomerDetail() {
 
   // Product management functions
   const addProduct = async () => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
       setSavingProduct(true)
       
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/products`, {
+      const response = await authenticatedFetch(`/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
@@ -1197,15 +1262,18 @@ export default function CustomerDetail() {
   }
 
   const saveProduct = async (index) => {
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
+    
     try {
       setSavingProduct(true)
       
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/products`, {
+      const response = await authenticatedFetch(`/api/products`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           customerId: customerId,
@@ -1233,10 +1301,15 @@ export default function CustomerDetail() {
     if (!confirm('Are you sure you want to remove this product?')) {
       return
     }
+    
+    if (!authenticatedFetch) {
+      showNotification('Authentication not ready', 'error', 'Error')
+      return
+    }
 
     try {
       const product = customerProducts[index]
-      const response = await fetch(`/api/products?customerId=${customerId}&productIndex=${index}&productId=${product.productId}&version=${product._version}`, {
+      const response = await authenticatedFetch(`/api/products?customerId=${customerId}&productIndex=${index}&productId=${product.productId}&version=${product._version}`, {
         method: 'DELETE'
       })
 
@@ -1328,7 +1401,7 @@ export default function CustomerDetail() {
         jointHolders: updatedJointHolders
       }
       
-      const response = await fetch('/api/customers', {
+      const response = await authenticatedFetch('/api/customers', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1375,7 +1448,7 @@ export default function CustomerDetail() {
     try {
       const updatedJointHolders = jointHolders.filter((_, index) => index !== holderIndex)
       
-      const response = await fetch('/api/customers', {
+      const response = await authenticatedFetch('/api/customers', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1517,13 +1590,17 @@ export default function CustomerDetail() {
 
   // Send calendar invite via email
   const sendCalendarInviteEmail = async (meetingData) => {
+    if (!authenticatedFetch) {
+      throw new Error('Authentication not ready')
+    }
+    
     const startDateTime = new Date(`${meetingData.date}T${meetingData.time}`)
     const endDateTime = new Date(startDateTime.getTime() + (parseInt(meetingData.duration) * 60000))
     
     const icsContent = createICSFileContent(meetingData, startDateTime, endDateTime)
     
     try {
-      const response = await fetch('/api/send-calendar-invite', {
+      const response = await authenticatedFetch('/api/send-calendar-invite', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

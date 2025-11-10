@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 
 function EnquiriesContent() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const searchParams = useSearchParams()
   const [enquiries, setEnquiries] = useState([])
   const [allEnquiries, setAllEnquiries] = useState([])
@@ -33,25 +33,33 @@ function EnquiriesContent() {
       setStatusFilter(status)
     }
     
-    loadAllEnquiries()
-    setInitialLoad(false)
-  }, [searchParams])
+    // Only load enquiries after auth is ready
+    if (!authLoading && authenticatedFetch) {
+      loadAllEnquiries()
+      setInitialLoad(false)
+    }
+  }, [searchParams, authLoading, authenticatedFetch])
 
   useEffect(() => {
-    if (!initialLoad) {
+    if (!initialLoad && !authLoading && authenticatedFetch) {
       searchEnquiries() // Load enquiries when filters change, but not on initial load
     }
-  }, [statusFilter, typeFilter, assignedToFilter, initialLoad])
+  }, [statusFilter, typeFilter, assignedToFilter, initialLoad, authLoading, authenticatedFetch])
 
   useEffect(() => {
-    if (!initialLoad) {
+    if (!initialLoad && !authLoading && authenticatedFetch) {
       searchEnquiries() // Search when initial load is complete
     }
-  }, [initialLoad])
+  }, [initialLoad, authLoading, authenticatedFetch])
 
   const loadAllEnquiries = async () => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet, skipping loadAllEnquiries')
+      return
+    }
+    
     try {
-      const response = await fetch('/api/enquiries?limit=100')
+      const response = await authenticatedFetch('/api/enquiries?limit=100')
       const data = await response.json()
       setAllEnquiries(data.enquiries || [])
     } catch (error) {
@@ -61,6 +69,11 @@ function EnquiriesContent() {
   }
 
   const searchEnquiries = async (page = 1) => {
+    if (!authenticatedFetch) {
+      console.warn('authenticatedFetch not available yet, skipping searchEnquiries')
+      return
+    }
+    
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -84,7 +97,7 @@ function EnquiriesContent() {
         params.append('assignedTo', assignedToFilter)
       }
 
-      const response = await fetch(`/api/enquiries?${params}`)
+      const response = await authenticatedFetch(`/api/enquiries?${params}`)
       const data = await response.json()
       
       setEnquiries(data.enquiries || [])
@@ -226,7 +239,7 @@ function EnquiriesContent() {
       const url = `/api/enquiries?enquiryId=${encodeURIComponent(enquiryToDelete.id)}&version=${enquiryToDelete._version || 1}`
       console.log('DELETE URL:', url)
       
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: 'DELETE',
       })
 

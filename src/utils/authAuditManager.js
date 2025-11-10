@@ -62,7 +62,6 @@ export async function logSuccessfulLogin(user, request) {
     }
     
     const result = await collection.insertOne(auditLog)
-    console.log(`✅ Login audit logged for user: ${user.email}`)
     
     return { ...auditLog, _id: result.insertedId }
   } catch (error) {
@@ -96,7 +95,6 @@ export async function logFailedLogin(email, reason, request) {
     }
     
     const result = await collection.insertOne(auditLog)
-    console.log(`⚠️ Failed login audit logged for email: ${email}, reason: ${reason}`)
     
     return { ...auditLog, _id: result.insertedId }
   } catch (error) {
@@ -131,7 +129,6 @@ export async function logLogout(user, request) {
     }
     
     const result = await collection.insertOne(auditLog)
-    console.log(`✅ Logout audit logged for user: ${user.email}`)
     
     return { ...auditLog, _id: result.insertedId }
   } catch (error) {

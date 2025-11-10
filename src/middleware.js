@@ -70,7 +70,6 @@ export async function middleware(request) {
       response.headers.set('x-user-name', decoded.name)
       response.headers.set('x-user-role', decoded.role)
       
-      console.log(`[Auth] Authenticated API access: ${pathname} by ${decoded.email}`)
       return response
       
     } catch (error) {

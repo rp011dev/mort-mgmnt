@@ -57,16 +57,10 @@ function CustomersContent() {
   }, [searchTerm, initialLoad, authLoading, authenticatedFetch])
 
   const loadAllCustomers = async () => {
-    console.log('🔍 loadAllCustomers called')
-    console.log('🔍 authenticatedFetch available?', !!authenticatedFetch)
-    console.log('🔍 authenticatedFetch type:', typeof authenticatedFetch)
-    
     if (!authenticatedFetch) {
       console.warn('❌ authenticatedFetch not available yet, skipping loadAllCustomers')
       return
     }
-    
-    console.log('✅ Using authenticatedFetch for /api/customers')
     
     try {
       const response = await authenticatedFetch('/api/customers?limit=100') // Get all customers for filter options

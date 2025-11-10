@@ -18,7 +18,6 @@ async function getUsersCollection() {
 export async function POST(request) {
   try {
     const { email, password } = await request.json()
-    console.log('Login attempt for email:', email)
     
     // Validate input
     if (!email || !password) {
@@ -32,12 +31,8 @@ export async function POST(request) {
     const usersCollection = await getUsersCollection()
     
     // Find user by email
-    const user = await usersCollection.findOne({ 
-      email: email.toLowerCase(),
-      active: true 
-    })
-    console.log('User found:', user ? 'Yes' : 'No')
-    
+    const user = await findUserByEmail(email)
+
     if (!user) {
       // Log failed login - user not found
       await logFailedLogin(email, 'User not found or inactive', request)

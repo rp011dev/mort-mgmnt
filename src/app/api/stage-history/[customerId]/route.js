@@ -53,7 +53,6 @@ export async function GET(req, { params }) {
       )
     }
 
-    console.log('Reading stage history for customer:', customerId)
     const collection = await getStageHistoryCollection()
     
     // Fetch all stage history entries for this customer, sorted by timestamp (newest first)
@@ -65,9 +64,8 @@ export async function GET(req, { params }) {
     // Remove MongoDB _id field from results
     const cleanHistory = customerHistory.map(({ _id, ...entry }) => entry)
 
-    // Get current stage from most recent entry
-    const currentStage = cleanHistory.length > 0 ? cleanHistory[0].stage : null
-    console.log('Current stage:', currentStage)
+    // Get current stage of this customer
+    const currentStage = customer?.currentStage || null
 
     return NextResponse.json({
       customerHistory: cleanHistory,

@@ -167,8 +167,6 @@ This is an automated message from the GK Finance Customer Management System.
     // Send the email
     const info = await transporter.sendMail(mailOptions)
 
-    console.log('Calendar invite sent:', info.messageId)
-
     return NextResponse.json({
       success: true,
       message: 'Calendar invite sent successfully',

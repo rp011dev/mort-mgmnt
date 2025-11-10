@@ -210,19 +210,12 @@ function EnquiriesContent() {
 
   // Delete enquiry functions
   const handleDeleteClick = (enquiry) => {
-    console.log('Delete clicked for enquiry:', enquiry)
-    console.log('Enquiry ID:', enquiry?.id)
-    console.log('Enquiry keys:', Object.keys(enquiry || {}))
     setEnquiryToDelete(enquiry)
     setDeleteModalOpen(true)
   }
 
   const handleDeleteConfirm = async () => {
     if (!enquiryToDelete) return
-
-    console.log('Deleting enquiry:', enquiryToDelete)
-    console.log('Enquiry ID type:', typeof enquiryToDelete.id)
-    console.log('Enquiry ID value:', enquiryToDelete.id)
     
     // Basic validation
     if (!enquiryToDelete.id || typeof enquiryToDelete.id !== 'string' || enquiryToDelete.id.trim() === '') {
@@ -237,7 +230,6 @@ function EnquiriesContent() {
     setDeleting(true)
     try {
       const url = `/api/enquiries?enquiryId=${encodeURIComponent(enquiryToDelete.id)}&version=${enquiryToDelete._version || 1}`
-      console.log('DELETE URL:', url)
       
       const response = await authenticatedFetch(url, {
         method: 'DELETE',
@@ -251,9 +243,6 @@ function EnquiriesContent() {
         // Close modal and reset state
         setDeleteModalOpen(false)
         setEnquiryToDelete(null)
-        
-        // Show success message (you could add a toast notification here)
-        console.log('Enquiry deleted successfully')
       } else {
         const error = await response.json()
         console.error('Failed to delete enquiry:', error.error)

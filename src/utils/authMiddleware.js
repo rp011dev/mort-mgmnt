@@ -41,21 +41,18 @@ export async function getUserFromRequest(request) {
     const authHeader = request.headers.get('authorization')
     
     if (!authHeader) {
-      console.log('No authorization header found')
       return null
     }
     
     const token = extractToken(authHeader)
     
     if (!token) {
-      console.log('No token extracted from authorization header')
       return null
     }
     
     const decoded = await verifyTokenEdge(token)
     
     if (!decoded) {
-      console.log('Token verification failed')
       return null
     }
     

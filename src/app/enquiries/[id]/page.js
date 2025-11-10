@@ -600,8 +600,6 @@ export default function EnquiryDetails({ params }) {
       ...meetingData
     }
     
-    console.log('Meeting scheduled:', meetingDetails)
-    
     // Show success message
     alert(`${getMeetingTypeDisplay(meetingType)} scheduled successfully for ${meetingData.date} at ${meetingData.time}`)
     

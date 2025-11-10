@@ -41,16 +41,12 @@ export default function CustomerDocuments({ customerId }) {
     
     try {
       setLoading(true)
-      console.log('📄 Loading documents for customer:', customerId)
       
       // Use GridFS API to load documents
       const response = await authenticatedFetch(`/api/documents-gridfs?customerId=${customerId}`)
       
-      console.log('📄 Documents API response status:', response.status)
-      
       if (response.ok) {
         const data = await response.json()
-        console.log('📄 Documents loaded:', data.files?.length || 0, 'files')
         
         // Set documents directly as array (GridFS returns array of files)
         setCustomerDocuments(data.files || [])

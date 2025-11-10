@@ -97,13 +97,6 @@ export default function Dashboard() {
         loadAllData('/api/products', null, false) // doesn't support pagination
       ])
 
-      console.log('Dashboard loaded:', {
-        customers: customersData.length,
-        enquiries: enquiriesData.length,
-        fees: feesData.length,
-        products: productsData.length
-      })
-
       setCustomers(customersData)
       setEnquiries(enquiriesData)
       setFees(feesData)
@@ -237,18 +230,6 @@ export default function Dashboard() {
         })
       }
     })
-
-    // Log the summary for debugging
-    if (customers.length > 0) {
-      console.log(`Product End Date Summary:`)
-      console.log(`- Total customers: ${customers.length}`)
-      console.log(`- Total products entries: ${products.length}`)
-      console.log(`- Customers with products: ${customersWithProducts}`)
-      console.log(`- Products with end dates: ${productsWithEndDates}`)
-      console.log(`- Future end dates: ${futureEndDates}`)
-      console.log(`- Past end dates: ${pastEndDates}`)
-      console.log(`- Alerts: 1mo=${alerts.oneMonth.length}, 3mo=${alerts.threeMonths.length}, 6mo=${alerts.sixMonths.length}`)
-    }
 
     return alerts
   }

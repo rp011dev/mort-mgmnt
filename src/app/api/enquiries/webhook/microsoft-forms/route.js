@@ -29,8 +29,6 @@ export async function POST(request) {
 
     const enquiryData = await request.json()
     
-    console.log('Microsoft Forms webhook received:', enquiryData)
-    
     // Validate required fields
     const requiredFields = ['firstName', 'lastName', 'email', 'enquiryType']
     const missingFields = requiredFields.filter(field => !enquiryData[field])
@@ -87,8 +85,6 @@ export async function POST(request) {
     enquiries.push(newEnquiry)
     
     fs.writeFileSync(enquiriesFilePath, JSON.stringify(enquiries, null, 2))
-    
-    console.log('New enquiry created:', newEnquiry.id)
     
     return NextResponse.json({ 
       message: 'Enquiry received successfully',

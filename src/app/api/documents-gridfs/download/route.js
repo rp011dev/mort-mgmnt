@@ -17,20 +17,11 @@ export async function GET(request) {
     const tokenFromQuery = searchParams.get('token')
     const view = searchParams.get('view') === 'true'
 
-    console.log('📥 Download request received:', {
-      fileId,
-      hasTokenInQuery: !!tokenFromQuery,
-      view
-    })
-
     // Check authentication - support token in query param for downloads
     let user = getUserFromRequest(request)
     
-    console.log('🔐 User from header:', user ? 'Found' : 'Not found')
-    
     // If no user from header, try query param token
     if (!user && tokenFromQuery) {
-      console.log('🔑 Attempting to validate token from query parameter')
       // Validate token from query param using jose
       try {
         const secret = new TextEncoder().encode(
@@ -38,7 +29,6 @@ export async function GET(request) {
         )
         const { payload } = await jwtVerify(tokenFromQuery, secret)
         user = payload
-        console.log('✅ Token validated successfully:', { email: user.email })
       } catch (err) {
         console.error('❌ Token validation failed:', err.message)
         return NextResponse.json(
@@ -55,8 +45,6 @@ export async function GET(request) {
         { status: 401 }
       )
     }
-    
-    console.log('✅ User authenticated, proceeding with download')
 
     if (!fileId) {
       return NextResponse.json(

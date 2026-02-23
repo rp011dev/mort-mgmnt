@@ -25,16 +25,15 @@ async function getStageHistoryCollection() {
 async function getNextStageHistoryId() {
   const collection = await getStageHistoryCollection()
   
-  // Find the highest ID number
-  const lastEntry = await collection
+    // Find all entries matching the pattern
+  const allEntries = await collection
     .find({ id: { $regex: /^SH\d+$/ } })
-    .sort({ id: -1 })
-    .limit(1)
     .toArray()
   
-  if (lastEntry.length > 0) {
-    const lastId = lastEntry[0].id
-    const lastNumber = parseInt(lastId.replace('SH', ''), 10)
+  if (allEntries.length > 0) {
+    // Extract numbers and find the maximum
+    const numbers = allEntries.map(entry => parseInt(entry.id.replace('SH', ''), 10))
+    const lastNumber = Math.max(...numbers)
     return `SH${lastNumber + 1}`
   }
   

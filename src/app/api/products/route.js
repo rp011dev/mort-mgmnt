@@ -75,15 +75,16 @@ export async function POST(request) {
     
     const collection = await getProductsCollection();
     
-    // Find the highest productId to generate the next one
-    const lastProduct = await collection.find({})
-      .sort({ productId: -1 })
-      .limit(1)
+    // Find all products with numeric IDs and get the maximum value
+    const allProducts = await collection
+      .find({ productId: { $type: 'int' } })
       .toArray();
     
-    const nextProductId = lastProduct.length > 0 
-      ? (parseInt(lastProduct[0].productId) || 0) + 1 
-      : 1;
+    let nextProductId = 1;
+    if (allProducts.length > 0) {
+      const ids = allProducts.map(p => p.productId)
+      nextProductId = Math.max(...ids) + 1
+    }
     
     // Add audit trail fields
     const timestamp = new Date().toISOString()

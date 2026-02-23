@@ -112,17 +112,15 @@ export async function POST(request) {
     
     const collection = await getNotesCollection()
     
-    // Find the highest note ID to generate the next one
-    const lastNote = await collection.find({})
-      .sort({ id: -1 })
-      .limit(1)
+    // Find all notes with matching ID pattern and get the maximum numeric value
+    const allNotes = await collection
+      .find({ id: { $regex: /^NOTE\d+$/ } })
       .toArray()
     
-    // Extract numeric part from id (e.g., "NOTE123" -> 123)
     let nextNoteNumber = 1
-    if (lastNote.length > 0 && lastNote[0].id) {
-      const lastNoteNumber = parseInt(lastNote[0].id.replace(/^NOTE/, '')) || 0
-      nextNoteNumber = lastNoteNumber + 1
+    if (allNotes.length > 0) {
+      const numbers = allNotes.map(n => parseInt(n.id.replace('NOTE', ''), 10))
+      nextNoteNumber = Math.max(...numbers) + 1
     }
     
     const newNoteId = `NOTE${nextNoteNumber}`

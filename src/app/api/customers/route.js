@@ -120,14 +120,18 @@ export async function POST(request) {
     const customersCollection =  await getCustomersCollection();
     
     // Generate new customer ID (always generate a new one, ignore any incoming ID)
-    const lastCustomer = await customersCollection
-      .find()
-      .sort({ id: -1 })
-      .limit(1)
+    // Find all customers with matching ID pattern and get the maximum numeric value
+    const allCustomers = await customersCollection
+      .find({ id: { $regex: /^GKF\d+$/ } })
       .toArray()
-      
-    const lastId = lastCustomer[0]?.id || 'GKF00000'
-    const newIdNumber = parseInt(lastId.slice(3)) + 1
+    
+    let lastIdNumber = 0
+    if (allCustomers.length > 0) {
+      const numbers = allCustomers.map(customer => parseInt(customer.id.slice(3), 10))
+      lastIdNumber = Math.max(...numbers)
+    }
+    
+    const newIdNumber = lastIdNumber + 1
     const newId = `GKF${String(newIdNumber).padStart(5, '0')}`
     
     // Generate product reference number based on category

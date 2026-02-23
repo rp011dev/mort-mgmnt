@@ -84,17 +84,15 @@ export async function POST(request) {
     
     const collection = await getFeesCollection()
     
-    // Find the highest feeId to generate the next one
-    const lastFee = await collection.find({})
-      .sort({ feeId: -1 })
-      .limit(1)
+    // Find all fees with matching ID pattern and get the maximum numeric value
+    const allFees = await collection
+      .find({ feeId: { $regex: /^FEE\d+$/ } })
       .toArray()
     
-    // Extract numeric part from feeId (e.g., "FEE123" -> 123)
     let nextFeeNumber = 1
-    if (lastFee.length > 0 && lastFee[0].feeId) {
-      const lastFeeNumber = parseInt(lastFee[0].feeId.replace(/^FEE/, '')) || 0
-      nextFeeNumber = lastFeeNumber + 1
+    if (allFees.length > 0) {
+      const numbers = allFees.map(fee => parseInt(fee.feeId.replace('FEE', ''), 10))
+      nextFeeNumber = Math.max(...numbers) + 1
     }
     
     const newFeeId = `FEE${nextFeeNumber}`

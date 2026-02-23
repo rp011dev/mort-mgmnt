@@ -139,17 +139,18 @@ export async function POST(request) {
 
     const collection = await getEnquiriesCollection();
     
-    // Find the highest existing ID
-    const lastEnquiry = await collection
+    // Find all enquiries with matching ID pattern and get the maximum numeric value
+    const allEnquiries = await collection
       .find({ id: { $regex: /^ENQ\d+$/ } })
-      .sort({ id: -1 })
-      .limit(1)
       .toArray();
     
-    const lastId = lastEnquiry.length > 0 
-      ? parseInt(lastEnquiry[0].id.replace('ENQ', ''), 10) 
-      : 0;
-    const newId = lastId + 1;
+    let lastIdNumber = 0
+    if (allEnquiries.length > 0) {
+      const numbers = allEnquiries.map(enquiry => parseInt(enquiry.id.replace('ENQ', ''), 10))
+      lastIdNumber = Math.max(...numbers)
+    }
+    
+    const newId = lastIdNumber + 1;
 
     // Add audit trail fields
     const timestamp = new Date().toISOString()

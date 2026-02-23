@@ -86,12 +86,9 @@ export default function NewEnquiry() {
     
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
-    if (!formData.email.trim()) newErrors.email = 'Email is required'
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
-    if (!formData.postcode.trim()) newErrors.postcode = 'Postcode is required'
-    if (!formData.address.trim()) newErrors.address = 'Address is required'
     
-    // Email validation
+    // Email validation (only if provided)
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
     }
@@ -105,12 +102,9 @@ export default function NewEnquiry() {
     if (formData.customerAccountType === 'Joint') {
       if (!formData.jointFirstName.trim()) newErrors.jointFirstName = 'Joint account holder first name is required'
       if (!formData.jointLastName.trim()) newErrors.jointLastName = 'Joint account holder last name is required'
-      if (!formData.jointEmail.trim()) newErrors.jointEmail = 'Joint account holder email is required'
       if (!formData.jointPhone.trim()) newErrors.jointPhone = 'Joint account holder phone is required'
-      if (!formData.jointPostcode.trim()) newErrors.jointPostcode = 'Joint account holder postcode is required'
-      if (!formData.jointAddress.trim()) newErrors.jointAddress = 'Joint account holder address is required'
       
-      // Joint email validation
+      // Joint email validation (only if provided)
       if (formData.jointEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.jointEmail)) {
         newErrors.jointEmail = 'Please enter a valid email address'
       }
@@ -273,14 +267,13 @@ export default function NewEnquiry() {
 
                 <div className="row mb-2">
                   <div className="col-md-6">
-                    <label className="form-label small mb-1">Email *</label>
+                    <label className="form-label small mb-1">Email</label>
                     <input
                       type="email"
                       className={`form-control form-control-sm ${errors.email ? 'is-invalid' : ''}`}
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      required
                     />
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </div>
@@ -323,14 +316,13 @@ export default function NewEnquiry() {
                     </select>
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small mb-1">Postcode *</label>
+                    <label className="form-label small mb-1">Postcode</label>
                     <input
                       type="text"
                       className={`form-control form-control-sm ${errors.postcode ? 'is-invalid' : ''}`}
                       name="postcode"
                       value={formData.postcode}
                       onChange={handleInputChange}
-                      required
                     />
                     {errors.postcode && <div className="invalid-feedback">{errors.postcode}</div>}
                   </div>
@@ -367,14 +359,13 @@ export default function NewEnquiry() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label small mb-1">Address *</label>
+                  <label className="form-label small mb-1">Address</label>
                   <textarea
                     className={`form-control form-control-sm ${errors.address ? 'is-invalid' : ''}`}
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
                     rows="2"
-                    required
                   />
                   {errors.address && <div className="invalid-feedback">{errors.address}</div>}
                 </div>
@@ -412,14 +403,13 @@ export default function NewEnquiry() {
 
                     <div className="row mb-2">
                       <div className="col-md-6">
-                        <label className="form-label small mb-1">Email *</label>
+                        <label className="form-label small mb-1">Email</label>
                         <input
                           type="email"
                           className={`form-control form-control-sm ${errors.jointEmail ? 'is-invalid' : ''}`}
                           name="jointEmail"
                           value={formData.jointEmail}
                           onChange={handleInputChange}
-                          required
                         />
                         {errors.jointEmail && <div className="invalid-feedback">{errors.jointEmail}</div>}
                       </div>
@@ -464,14 +454,13 @@ export default function NewEnquiry() {
                         </select>
                       </div>
                       <div className="col-md-4">
-                        <label className="form-label small mb-1">Postcode *</label>
+                        <label className="form-label small mb-1">Postcode</label>
                         <input
                           type="text"
                           className={`form-control form-control-sm ${errors.jointPostcode ? 'is-invalid' : ''}`}
                           name="jointPostcode"
                           value={formData.jointPostcode}
                           onChange={handleInputChange}
-                          required
                         />
                         {errors.jointPostcode && <div className="invalid-feedback">{errors.jointPostcode}</div>}
                       </div>
@@ -479,14 +468,13 @@ export default function NewEnquiry() {
 
                     <div className="row mb-2">
                       <div className="col-md-8">
-                        <label className="form-label small mb-1">Address *</label>
+                        <label className="form-label small mb-1">Address</label>
                         <textarea
                           className={`form-control form-control-sm ${errors.jointAddress ? 'is-invalid' : ''}`}
                           name="jointAddress"
                           value={formData.jointAddress}
                           onChange={handleInputChange}
                           rows="2"
-                          required
                         />
                         {errors.jointAddress && <div className="invalid-feedback">{errors.jointAddress}</div>}
                       </div>

@@ -16,9 +16,10 @@ export async function GET(req, { params }) {
 export async function PATCH(req, { params }) {
   const db = await getDb()
   const updateFields = await req.json()
+  const now = new Date()
   const result = await db.collection('referrals').updateOne(
     { _id: new ObjectId(params.id) },
-    { $set: updateFields }
+    { $set: { ...updateFields, updatedAt: now } }
   )
   return NextResponse.json({ modifiedCount: result.modifiedCount })
 }

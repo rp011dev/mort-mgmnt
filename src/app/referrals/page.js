@@ -95,6 +95,13 @@ function ReferralDetailsModal({ referral, show, onClose, onEdit, onSave, onChang
                   <button type="button" className="btn btn-primary btn-sm px-2 py-1" style={{ fontSize: '0.92rem' }} onClick={onEdit}>Edit</button>
                 )}
               </div>
+              {/* Show last updated info at the bottom */}
+              {!isNew && (
+                <div className="mt-2 small text-muted text-end">
+                  <div>Last updated by: <span className="fw-bold">{referral.updatedBy || referral.addedBy || 'N/A'}</span></div>
+                  <div>Last modified: <span className="fw-bold">{referral.updatedAt ? new Date(referral.updatedAt).toLocaleString() : 'N/A'}</span></div>
+                </div>
+              )}
             </form>
           </div>
         </div>
@@ -116,6 +123,7 @@ export default function ReferralsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [addMode, setAddMode] = useState(false);
+  const { user } = require('@/hooks/useAuth').useAuth(false);
   const emptyReferral = {
     type: '',
     referralName: '',
@@ -175,7 +183,7 @@ export default function ReferralsPage() {
       try {
         const res = await authenticatedFetch('/api/referrals', {
           method: 'POST',
-          body: JSON.stringify(form)
+          body: JSON.stringify({ ...form, addedBy: user?.name || 'system' })
         });
         if (!res.ok) throw new Error('Failed to add referral');
         setAddMode(false);
@@ -193,7 +201,7 @@ export default function ReferralsPage() {
         const { _id, id, ...updateFields } = form;
         const res = await authenticatedFetch(`/api/referrals/${form._id || form.id}`, {
           method: 'PATCH',
-          body: JSON.stringify(updateFields)
+          body: JSON.stringify({ ...updateFields, updatedBy: user?.name || 'system' })
         });
         if (!res.ok) throw new Error('Failed to update referral');
         setEdit(false);

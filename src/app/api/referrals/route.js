@@ -47,9 +47,12 @@ export async function POST(req) {
   if (!data.referralName || !data.type || !data.address || !data.customerName || !data.amount || !data.status) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
+  const now = new Date()
   const result = await db.collection('referrals').insertOne({
     ...data,
-    notes: data.notes || ''
+    notes: data.notes || '',
+    createdAt: now,
+    updatedAt: now
   })
   return NextResponse.json({ insertedId: result.insertedId })
 }
@@ -62,9 +65,10 @@ export async function PATCH(req) {
     return NextResponse.json({ error: 'Missing referral _id' }, { status: 400 })
   }
   const { _id, ...updateFields } = data
+  const now = new Date()
   const result = await db.collection('referrals').updateOne(
     { _id: typeof _id === 'string' ? new (await import('mongodb')).ObjectId(_id) : _id },
-    { $set: updateFields }
+    { $set: { ...updateFields, updatedAt: now } }
   )
   return NextResponse.json({ modifiedCount: result.modifiedCount })
 }

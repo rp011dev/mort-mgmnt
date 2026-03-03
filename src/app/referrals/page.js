@@ -147,24 +147,15 @@ export default function ReferralsPage() {
   }, [])
 
   async function openModal(ref) {
-    // Defensive: use id if present, else fallback to referralName (for new)
-    const id = ref.id || ref._id || ref.referralName;
-    if (!id || id === 'undefined') {
-      setSelected(ref);
-      setForm({ ...ref });
-      setModalOpen(true);
-      setEdit(false);
-      return;
-    }
     // Fetch latest details for selected referral
     try {
-      const res = await authenticatedFetch(`/api/referrals/${id}`);
-      if (!res.ok) throw new Error('Failed to fetch referral details');
-      const data = await res.json();
-      setSelected(data);
-      setForm({ ...data });
-      setModalOpen(true);
-      setEdit(false);
+      const res = await authenticatedFetch(`/api/referrals/${ref._id || ref.id}`)
+      if (!res.ok) throw new Error('Failed to fetch referral details')
+      const data = await res.json()
+      setSelected(data)
+      setForm({ ...data })
+      setModalOpen(true)
+      setEdit(false)
     } catch (err) {
       setError(err.message)
     }
@@ -298,60 +289,69 @@ export default function ReferralsPage() {
   }
 
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
+    <div className="container py-3">
+      <div className="search-container" style={{marginBottom: '8px'}}>
+        <div className="card" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderRadius: '10px', background: '#f8f9fa', border: 'none', marginBottom: '0px' }}>
+          <div className="card-body py-2 px-2">
+            <form onSubmit={e => { e.preventDefault(); handleSearch(); }}>
+              <div className="row g-2 align-items-end" style={{marginTop: '0px'}}>
+                <div className="col-md-5">
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ borderRadius: '8px', fontSize: '0.97rem', border: '1px solid #d1d5db' }}
+                    placeholder="Start typing (2+ letters) to search by Referral Name, Address, Customer Name..."
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+                <div className="col-md-2">
+                  <select className="form-select" style={{ borderRadius: '8px', fontSize: '0.97rem' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+                    <option value="">Type</option>
+                    <option value="Solicitor">Solicitor</option>
+                    <option value="Insurance">Insurance</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="col-md-2">
+                  <select className="form-select" style={{ borderRadius: '8px', fontSize: '0.97rem' }} value={filterFeeStatus} onChange={e => setFilterFeeStatus(e.target.value)}>
+                    <option value="">Fee Status</option>
+                    <option value="PAID">PAID</option>
+                    <option value="UNPAID">UNPAID</option>
+                  </select>
+                </div>
+                <div className="col-md-2">
+                  <select className="form-select" style={{ borderRadius: '8px', fontSize: '0.97rem' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                    <option value="">Status</option>
+                    <option value="Open">Open</option>
+                    <option value="Inprogress">Inprogress</option>
+                    <option value="Close">Close</option>
+                  </select>
+                </div>
+           
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div className="d-flex justify-content-between align-items-center mb-2">
         <h2 className="mb-0">Referral Portal</h2>
         <div className="d-flex gap-2">
           <button
             className="btn btn-success btn-sm"
+            style={{ borderRadius: '8px', fontSize: '0.97rem', boxShadow: '0 2px 8px rgba(40,167,69,0.08)' }}
             onClick={handleAddReferral}
           >
-            + Add Referral
+            <i className="bi bi-plus-lg me-1"></i> Add Referral
           </button>
           <button
             className="btn btn-outline-secondary btn-sm"
+            style={{ borderRadius: '8px', fontSize: '0.97rem', border: '1px solid #bdbdbd', background: '#fff', color: '#333', transition: 'background 0.2s, color 0.2s' }}
             onClick={() => setView(view === 'card' ? 'table' : 'card')}
           >
-            {view === 'card' ? 'Table View' : 'Card View'}
+            {view === 'card' ? <><i className="bi bi-table me-1"></i>Table View</> : <><i className="bi bi-grid-3x3-gap me-1"></i>Card View</>}
           </button>
-        </div>
-      </div>
-      <div className="row mb-3 g-2 search-filter-row">
-        <div className="col-md-4">
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            placeholder="Search by Referral Name, Address, Customer Name"
-            value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          />
-        </div>
-        <div className="col-md-2">
-          <select className="form-select form-select-sm" value={filterType} onChange={e => setFilterType(e.target.value)}>
-            <option value="">Type</option>
-            <option value="Solicitor">Solicitor</option>
-            <option value="Insurance">Insurance</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div className="col-md-2">
-          <select className="form-select form-select-sm" value={filterFeeStatus} onChange={e => setFilterFeeStatus(e.target.value)}>
-            <option value="">Fee Status</option>
-            <option value="PAID">PAID</option>
-            <option value="UNPAID">UNPAID</option>
-          </select>
-        </div>
-        <div className="col-md-2">
-          <select className="form-select form-select-sm" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="">Status</option>
-            <option value="Open">Open</option>
-            <option value="Inprogress">Inprogress</option>
-            <option value="Close">Close</option>
-          </select>
-        </div>
-        <div className="col-md-2 d-flex align-items-center">
-          <button className="btn btn-outline-secondary btn-sm w-100" style={{ minHeight: '32px' }} onClick={handleReset}>Reset</button>
         </div>
       </div>
       {error && <div className="alert alert-danger py-2 px-3 mb-2">{error}</div>}

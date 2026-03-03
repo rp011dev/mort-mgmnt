@@ -2,10 +2,41 @@ import { NextResponse } from 'next/server'
 import { getDb } from '../../../utils/mongoDb'
 
 // GET: List all referrals
-export async function GET() {
+export async function GET(req) {
   const db = await getDb()
-  const referrals = await db.collection('referrals').find({}).toArray()
-  return NextResponse.json(referrals)
+  const { searchParams } = new URL(req.url)
+  const query = {}
+
+  // Search fields (partial match, case-insensitive)
+  const searchText = searchParams.get('search')?.trim()
+  if (searchText) {
+    query['$or'] = [
+      { referralName: { $regex: searchText, $options: 'i' } },
+      { address: { $regex: searchText, $options: 'i' } },
+      { customerName: { $regex: searchText, $options: 'i' } }
+    ]
+  }
+
+  // Filters (exact match)
+  const type = searchParams.get('type')
+  if (type) query.type = type
+  const feeStatus = searchParams.get('feeStatus')
+  if (feeStatus) query.feeStatus = feeStatus
+  const status = searchParams.get('status')
+  if (status) query.status = status
+
+  // Pagination
+  const page = parseInt(searchParams.get('page') || '1', 10)
+  const pageSize = parseInt(searchParams.get('pageSize') || '10', 10)
+  const skip = (page - 1) * pageSize
+
+  const total = await db.collection('referrals').countDocuments(query)
+  const referrals = await db.collection('referrals')
+    .find(query)
+    .skip(skip)
+    .limit(pageSize)
+    .toArray()
+  return NextResponse.json({ data: referrals, total, page, pageSize })
 }
 
 // POST: Add a new referral

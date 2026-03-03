@@ -85,6 +85,15 @@ export default function Navigation() {
                 Enquiries
               </a>
             </li>
+            <li className="nav-item">
+              <a 
+                className={`nav-link px-2 py-1 rounded ${isActive('/referrals') ? 'active' : ''}`} 
+                href="/referrals"
+              >
+                <i className="bi bi-person-check me-1"></i>
+                Referral Portal
+              </a>
+            </li>
           </ul>
           
           <div className="d-flex align-items-center gap-3 h-100" style={{ position: 'relative', zIndex: 1050 }}>

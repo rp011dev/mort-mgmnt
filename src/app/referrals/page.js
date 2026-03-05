@@ -58,7 +58,7 @@ function ReferralDetailsModal({ referral, show, onClose, onEdit, onSave, onChang
               <div className="col-6 mb-1">
                 <label className="form-label mb-0" style={{ fontSize: '0.93rem' }}>Fee Status</label>
                 {edit || isNew ? (
-                  <select name="feeStatus" className="form-select form-select-sm" style={{ height: '28px', fontSize: '0.95rem' }} value={form.feeStatus || ''} onChange={onChange}>
+                  <select name="feeStatus" className="form-select form-select-sm" style={{ height: '35px', fontSize: '0.95rem', padding: '0.15rem 0.35rem' }} value={form.feeStatus || ''} onChange={onChange}>
                     <option value="PAID">PAID</option>
                     <option value="UNPAID">UNPAID</option>
                   </select>
@@ -69,7 +69,7 @@ function ReferralDetailsModal({ referral, show, onClose, onEdit, onSave, onChang
               <div className="col-6 mb-1">
                 <label className="form-label mb-0" style={{ fontSize: '0.93rem' }}>Status</label>
                 {edit || isNew ? (
-                  <select name="status" className="form-select form-select-sm" style={{ height: '28px', fontSize: '0.95rem' }} value={form.status || ''} onChange={onChange}>
+                  <select name="status" className="form-select form-select-sm" style={{ height: '35px', fontSize: '0.95rem', padding: '0.15rem 0.35rem' }} value={form.status || ''} onChange={onChange}>
                     <option value="Open">Open</option>
                     <option value="Inprogress">Inprogress</option>
                     <option value="Close">Close</option>

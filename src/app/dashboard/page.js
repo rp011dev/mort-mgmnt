@@ -90,16 +90,58 @@ export default function Dashboard() {
       setLoading(true)
       
       // Load all data by paginating until no more data is returned
-      const [customersData, enquiriesData, feesData, productsData] = await Promise.all([
+      const [customersData, enquiriesData, feesData, productsData, referralsResponse] = await Promise.all([
         loadAllData('/api/customers', 'customers', true), // supports pagination
         loadAllData('/api/enquiries', 'enquiries', true), // supports pagination
         loadAllData('/api/fees', null, false), // doesn't support pagination
-        loadAllData('/api/products', null, false) // doesn't support pagination
+        loadAllData('/api/products', null, false), // doesn't support pagination
+        (async () => {
+          // Fetch all referral fees using paginated GET /api/referrals
+          if (!authenticatedFetch) return { data: [] }
+          let allReferrals = []
+          let page = 1
+          const pageSize = 100
+          let total = null
+          try {
+            while (true) {
+              const response = await authenticatedFetch(`/api/referrals?page=${page}&pageSize=${pageSize}`)
+              if (!response.ok) break
+              const result = await response.json()
+              if (Array.isArray(result.data)) {
+                allReferrals = allReferrals.concat(result.data)
+              }
+              total = result.total
+              // If we've fetched all, break
+              if (allReferrals.length >= total) break
+              page++
+            }
+            return { data: allReferrals, total }
+          } catch (error) {
+            console.error('Error loading referral fees:', error)
+            return { data: [] }
+          }
+        })()
       ])
+
+      // Map referral fees to match fees structure for dashboard
+      const referralFees = Array.isArray(referralsResponse?.data)
+        ? referralsResponse.data.map(ref => ({
+            referralId: ref._id,
+            referralName: ref.referralName,
+            amount: Number(ref.amount) || 0,
+            status: ref.feeStatus || ref.status,
+            type: ref.type,
+            customerName: ref.customerName,
+            notes: ref.notes,
+            updatedBy: ref.updatedBy,
+            updatedAt: ref.updatedAt,
+            createdAt: ref.createdAt
+          }))
+        : []
 
       setCustomers(customersData)
       setEnquiries(enquiriesData)
-      setFees(feesData)
+      setFees([...feesData, ...referralFees])
       setProducts(productsData)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
@@ -576,27 +618,44 @@ export default function Dashboard() {
             <div className="card-body py-2 px-3">
               {Object.entries(
                 fees.reduce((grouped, fee) => {
-                  if (!grouped[fee.customerId]) {
-                    grouped[fee.customerId] = []
+                  // Group by customerId or referralId
+                  if (fee.referralId) {
+                    if (!grouped[`referral-${fee.referralId}`]) grouped[`referral-${fee.referralId}`] = []
+                    grouped[`referral-${fee.referralId}`].push(fee)
+                  } else {
+                    if (!grouped[fee.customerId]) grouped[fee.customerId] = []
+                    grouped[fee.customerId].push(fee)
                   }
-                  grouped[fee.customerId].push(fee)
                   return grouped
                 }, {})
-              ).map(([customerId, customerFees]) => {
-                const customer = customers.find(c => c.id === customerId)
+              ).map(([key, customerFees]) => {
+                let isReferral = key.startsWith('referral-')
+                let id = isReferral ? key.replace('referral-', '') : key
+                let customer = isReferral ? null : customers.find(c => c.id === id)
+                let referral = isReferral ? enquiries.find(r => r.id === id) : null
+                // If referral is not found in enquiries, try to get referralName from the fee object
+                let fallbackReferralName = isReferral && customerFees.length > 0 ? customerFees[0].referralName : id
                 const customerTotal = customerFees.reduce((sum, fee) => sum + (fee.amount || 0), 0)
                 const paidFees = customerFees.filter(fee => fee.status === 'PAID')
                 const unpaidFees = customerFees.filter(fee => fee.status === 'UNPAID')
-                
+
                 return (
-                  <div key={customerId} className="border-bottom py-2">
+                  <div key={key} className="border-bottom py-2">
                     <div className="row align-items-center">
                       <div className="col-md-4">
                         <h6 className="mb-1 small">
-                          {customer ? `${customer.firstName} ${customer.lastName}` : customerId}
+                          {isReferral
+                            ? referral
+                              ? `Referral: ${referral.referralName || id}`
+                              : `Referral: ${fallbackReferralName || id}`
+                            : customer
+                              ? `${customer.firstName} ${customer.lastName}`
+                              : id}
                         </h6>
                         <small className="text-muted" style={{fontSize: '0.75rem'}}>
-                          {customer?.category} - {customer?.productReferenceNumber}
+                          {isReferral
+                            ? referral?.referralEmail
+                            : `${customer?.category || ''} - ${customer?.productReferenceNumber || ''}`}
                         </small>
                       </div>
                       <div className="col-md-2 text-center">
@@ -612,9 +671,15 @@ export default function Dashboard() {
                         <div className="small text-muted" style={{fontSize: '0.7rem'}}>Outstanding</div>
                       </div>
                       <div className="col-md-2 text-end">
-                        <Link href={`/customers/${customerId}`} className="btn btn-sm btn-outline-primary">
-                          <span style={{fontSize: '0.75rem'}}>View Details</span>
-                        </Link>
+                        {isReferral ? (
+                          <Link href={`/referrals`} className="btn btn-sm btn-outline-primary">
+                            <span style={{fontSize: '0.75rem'}}>View Details</span>
+                          </Link>
+                        ) : (
+                          <Link href={`/customers/${id}`} className="btn btn-sm btn-outline-primary">
+                            <span style={{fontSize: '0.75rem'}}>View Details</span>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>

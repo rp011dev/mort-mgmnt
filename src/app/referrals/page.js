@@ -1,6 +1,7 @@
 "use client"
 import Link from 'next/link'
 import { useState } from 'react'
+import { useAuth } from '../../hooks/useAuth'
 
 function ReferralDetailsModal({ referral, show, onClose, onEdit, onSave, onChange, edit, form, isNew }) {
   if (!show || !referral) return null
@@ -123,7 +124,7 @@ export default function ReferralsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [addMode, setAddMode] = useState(false);
-  const { user } = require('@/hooks/useAuth').useAuth(false);
+  const { user, loading: authLoading, logout, authenticatedFetch } = useAuth()
   const emptyReferral = {
     type: '',
     referralName: '',
